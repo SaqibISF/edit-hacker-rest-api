@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Model } from 'mongoose';
+import { Document, Model, Types } from 'mongoose';
 import slugify from 'slugify';
 import mongooseAggregatePaginate from 'mongoose-aggregate-paginate-v2';
 
@@ -8,10 +8,11 @@ import mongooseAggregatePaginate from 'mongoose-aggregate-paginate-v2';
 // export const DELETE_USER_TTL = 90 * 24 * 60 * 60;
 export const DELETE_USER_TTL = '90d';
 
-export enum UserRole {
-  ADMIN = 'admin',
-  USER = 'user',
-}
+export const userRoles = ['admin', 'user'] as const;
+export type UserRole = (typeof userRoles)[number];
+
+export const providers = ['local', 'google', 'github'] as const;
+export type Provider = (typeof providers)[number];
 
 @Schema({ timestamps: true, versionKey: false })
 export class User {
@@ -31,7 +32,7 @@ export class User {
   @Prop({ select: false })
   password?: string;
 
-  @Prop({ required: true })
+  @Prop({ enum: userRoles, default: 'user' })
   role!: UserRole;
 
   @Prop()
@@ -54,6 +55,18 @@ export class User {
 
   @Prop()
   banReason?: string;
+
+  @Prop({ type: String, enum: providers, default: 'local' })
+  provider!: Provider;
+
+  @Prop({ type: String, default: null })
+  providerId!: string | null;
+
+  @Prop({ type: Boolean, default: false })
+  newsletter!: boolean;
+
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Tool' }], default: [] })
+  savedTools!: Types.ObjectId[];
 
   @Prop({ type: Date, expires: DELETE_USER_TTL })
   deletedAt?: Date;

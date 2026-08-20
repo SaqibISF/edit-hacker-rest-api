@@ -13,61 +13,58 @@ import {
 import { ApiTags } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { ResponseMessage } from '../decorators/response-message.decorator';
-import { UserRole } from './user.schema';
 import { Roles } from '../decorators/roles.decorator';
 import { Types } from 'mongoose';
 import { MongooseIdPipe } from '../pipes/mongoose-id/mongoose-id.pipe';
 import {
+  usersQuerySchema,
+  type UsersQueryDto,
   updateUserByAdminSchema,
   type UpdateUserByAdminDto,
-} from '../zod-schemas/update-user-by-admin.schema';
+} from './user.validation.schema';
 import { ZodValidationPipe } from '../pipes/zod-validation/zod-validation.pipe';
 import { IdentifierPipe } from '../pipes/identifier/identifier.pipe';
 import {
-  usersQuerySchema,
-  type UsersQueryDto,
-} from '../zod-schemas/users-query.schema';
-import {
-  ApiGetUsers,
-  ApiGetUserByAdmin,
-  ApiUpdateUserByAdmin,
-  ApiRestoreUserByAdmin,
-  ApiDeleteUserByAdmin,
-  ApiPermanentDeleteUserByAdmin,
-} from './users.decorators';
+  ApiGetUsersDocs,
+  ApiGetUserByAdminDocs,
+  ApiUpdateUserByAdminDocs,
+  ApiRestoreUserByAdminDocs,
+  ApiDeleteUserByAdminDocs,
+  ApiPermanentDeleteUserByAdminDocs,
+} from './users.swagger';
 
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @ApiGetUsers()
-  @Roles([UserRole.ADMIN])
+  @Roles(['admin'])
   @Get()
   @UsePipes(new ZodValidationPipe(usersQuerySchema))
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Users successfully retrieved')
+  @ApiGetUsersDocs()
   async getUsers(@Query() query: UsersQueryDto) {
     return await this.usersService.getUsers(query);
   }
 
-  @ApiGetUserByAdmin()
-  @Roles([UserRole.ADMIN])
+  @Roles(['admin'])
   @Get(':identifier')
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('User successfully retrieved')
+  @ApiGetUserByAdminDocs()
   async getUserByAdmin(
     @Param('identifier', IdentifierPipe) userId: string | Types.ObjectId,
   ) {
     return await this.usersService.getUser(userId);
   }
 
-  @ApiUpdateUserByAdmin()
-  @Roles([UserRole.ADMIN])
+  @Roles(['admin'])
   @Patch(':id')
   @UsePipes(new ZodValidationPipe(updateUserByAdminSchema))
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('User updated successfully')
+  @ApiUpdateUserByAdminDocs()
   async updateUserByAdmin(
     @Param('id', MongooseIdPipe) userId: Types.ObjectId,
     @Body()
@@ -79,34 +76,34 @@ export class UsersController {
     );
   }
 
-  @ApiRestoreUserByAdmin()
-  @Roles([UserRole.ADMIN])
+  @Roles(['admin'])
   @Patch(':id/restore')
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('User restored successfully')
+  @ApiRestoreUserByAdminDocs()
   async restoreUserByAdmin(
     @Param('id', MongooseIdPipe) userId: Types.ObjectId,
   ) {
     return await this.usersService.restoreUser(userId);
   }
 
-  @ApiDeleteUserByAdmin()
-  @Roles([UserRole.ADMIN])
+  @Roles(['admin'])
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
   @ResponseMessage(
     'User deleted successfully, the user can restore it within 90 days',
   )
+  @ApiDeleteUserByAdminDocs()
   async deleteUserByAdmin(@Param('id', MongooseIdPipe) userId: Types.ObjectId) {
     await this.usersService.deleteUser({ userId });
     return {};
   }
 
-  @ApiPermanentDeleteUserByAdmin()
-  @Roles([UserRole.ADMIN])
+  @Roles(['admin'])
   @Delete(':id/permanent-delete')
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('User permanently deleted successfully')
+  @ApiPermanentDeleteUserByAdminDocs()
   async permanentDeleteUserByAdmin(
     @Param('id', MongooseIdPipe) userId: Types.ObjectId,
   ) {

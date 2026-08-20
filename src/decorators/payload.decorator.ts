@@ -1,6 +1,6 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 import { Request } from 'express';
-import { UserRole } from '../users/user.schema';
+import type { UserRole } from '../users/user.schema';
 import { Types } from 'mongoose';
 
 export type PayloadData = {

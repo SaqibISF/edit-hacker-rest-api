@@ -10,7 +10,7 @@ import { ParticleStoredFile } from 'nestjs-form-data/dist/interfaces/ParticleSto
 import { Readable as ReadableStream } from 'stream';
 
 export class CustomFileSystemStoredFile extends FileSystemStoredFile {
-  filename: string;
+  filename!: string;
 
   static async create(
     busboyFileMeta: ParticleStoredFile,

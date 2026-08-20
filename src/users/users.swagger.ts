@@ -24,6 +24,13 @@ const USER_SCHEMA_PROPERTIES = {
     lastLoginAt: { type: 'string', format: 'date-time' },
     bannedAt: { type: 'string', format: 'date-time' },
     banReason: { type: 'string' },
+    provider: { type: 'string', enum: ['local', 'google', 'github'] },
+    providerId: { type: 'string', nullable: true },
+    newsletter: { type: 'boolean' },
+    savedTools: {
+      type: 'array',
+      items: { type: 'string' },
+    },
     deletedAt: { type: 'string', format: 'date-time' },
     createdAt: { type: 'string', format: 'date-time' },
     updatedAt: { type: 'string', format: 'date-time' },
@@ -41,6 +48,10 @@ const USER_EXAMPLE = {
   emailVerifiedAt: TIMESTAMP_EXAMPLE,
   passwordResetAt: TIMESTAMP_EXAMPLE,
   lastLoginAt: TIMESTAMP_EXAMPLE,
+  provider: 'local',
+  providerId: null,
+  newsletter: false,
+  savedTools: ['60d0fe4f5311236168a109ca'],
   createdAt: TIMESTAMP_EXAMPLE,
   updatedAt: TIMESTAMP_EXAMPLE,
 };
@@ -69,7 +80,7 @@ const UnauthorizedResponse = ApiResponse({
   },
 });
 
-export function ApiGetUsers() {
+export function ApiGetUsersDocs() {
   return applyDecorators(
     ApiOperation({ summary: 'Get all users' }),
     ApiQuery({
@@ -77,12 +88,14 @@ export function ApiGetUsers() {
       required: false,
       type: Number,
       description: 'Page number (default: 1)',
+      example: 1,
     }),
     ApiQuery({
       name: 'limit',
       required: false,
       type: Number,
       description: 'Items per page (default: 10)',
+      example: 10,
     }),
     ApiQuery({
       name: 'search',
@@ -206,7 +219,7 @@ export function ApiGetUsers() {
   );
 }
 
-export function ApiGetUserByAdmin() {
+export function ApiGetUserByAdminDocs() {
   return applyDecorators(
     ApiOperation({ summary: 'Get user by identifier (admin)' }),
     ApiParam({
@@ -264,7 +277,7 @@ export function ApiGetUserByAdmin() {
   );
 }
 
-export function ApiUpdateUserByAdmin() {
+export function ApiUpdateUserByAdminDocs() {
   return applyDecorators(
     ApiOperation({ summary: 'Update user (admin)' }),
     ApiParam({
@@ -343,7 +356,7 @@ export function ApiUpdateUserByAdmin() {
   );
 }
 
-export function ApiRestoreUserByAdmin() {
+export function ApiRestoreUserByAdminDocs() {
   return applyDecorators(
     ApiOperation({ summary: 'Restore soft-deleted user (admin)' }),
     ApiParam({
@@ -424,7 +437,7 @@ export function ApiRestoreUserByAdmin() {
   );
 }
 
-export function ApiDeleteUserByAdmin() {
+export function ApiDeleteUserByAdminDocs() {
   return applyDecorators(
     ApiOperation({ summary: 'Soft-delete user (admin)' }),
     ApiParam({
@@ -505,7 +518,7 @@ export function ApiDeleteUserByAdmin() {
   );
 }
 
-export function ApiPermanentDeleteUserByAdmin() {
+export function ApiPermanentDeleteUserByAdminDocs() {
   return applyDecorators(
     ApiOperation({ summary: 'Permanently delete user (admin)' }),
     ApiParam({

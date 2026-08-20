@@ -1,5 +1,4 @@
 import z from 'zod';
-import { emailSchema } from './email.schema';
 
 const commonPasswords: string[] = [];
 
@@ -60,50 +59,9 @@ const createPasswordSchema = z
   })
   .strict();
 
-const updatePasswordSchema = z
-  .object({
-    oldPassword: passwordSchema,
-    newPassword: choosePasswordSchema,
-    confirmPassword: confirmPasswordSchema,
-  })
-  .refine((data) => data.oldPassword !== data.newPassword, {
-    message: 'Please choose different password',
-    path: ['newPassword'],
-  })
-  .refine((data) => data.newPassword === data.confirmPassword, {
-    message: 'Passwords do not match',
-    path: ['confirmPassword'],
-  })
-  .strict();
-
-const resetPasswordSchema = z
-  .object({
-    token: z.string().optional(),
-    otp: z.number().optional(),
-    email: emailSchema,
-    newPassword: choosePasswordSchema,
-    confirmPassword: confirmPasswordSchema,
-  })
-  .refine((data) => data.token || data.otp, {
-    message: 'Either token or otp must be provided',
-    path: ['token'],
-  })
-  .refine((data) => data.newPassword === data.confirmPassword, {
-    message: 'Passwords do not match',
-    path: ['confirmPassword'],
-  })
-  .strict();
-
-type UpdatePasswordDto = z.infer<typeof updatePasswordSchema>;
-type ResetPasswordDto = z.infer<typeof resetPasswordSchema>;
-
 export {
   choosePasswordSchema,
   passwordSchema,
   confirmPasswordSchema,
   createPasswordSchema,
-  updatePasswordSchema,
-  resetPasswordSchema,
-  type UpdatePasswordDto,
-  type ResetPasswordDto,
 };

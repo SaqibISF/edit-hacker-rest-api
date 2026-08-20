@@ -6,6 +6,7 @@ import {
   Optional,
 } from '@nestjs/common';
 import { Types } from 'mongoose';
+import { objectIdSchema } from '../../zod-schemas/objectId.schema';
 
 @Injectable()
 export class MongooseIdPipe implements PipeTransform<
@@ -19,27 +20,23 @@ export class MongooseIdPipe implements PipeTransform<
     metadata: ArgumentMetadata,
   ): Types.ObjectId | undefined {
     // 1. Handle Optional Values (e.g., for optional query params)
-    if (!value && this.isOptional) {
+    if (this.isOptional) {
       return undefined;
     }
 
     // 2. Add Contextual Error Messages (using metadata.data to name the field)
     const fieldName = metadata.data || 'id';
 
-    if (!value || !Types.ObjectId.isValid(value)) {
+    if (!value) {
       throw new BadRequestException(
         `Invalid ObjectId format for field "${fieldName}": ${value}`,
       );
     }
 
-    // 3. Use createFromHexString for safer transformation in newer Mongoose versions
-    try {
-      return Types.ObjectId.createFromHexString(value);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      throw new BadRequestException(
-        `Failed to transform "${fieldName}" to ObjectId: ${message}`,
-      );
-    }
+    const { success, data: _id, error } = objectIdSchema.safeParse(value);
+
+    if (!success) throw new BadRequestException(error.issues[0].message);
+
+    return _id;
   }
 }

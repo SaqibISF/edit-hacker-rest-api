@@ -7,7 +7,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Connection, Model, Types } from 'mongoose';
-import { User, UserDocument, UserRole } from '../users/user.schema';
+import { User, UserDocument } from '../users/user.schema';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { JwtService } from '@nestjs/jwt';
 import { RevokedToken, RevokedTokenDocument } from './revoked-tokens.schema';
@@ -17,11 +17,13 @@ import { OtpSecret, OtpSecretDocument } from './otp-secret.schema';
 import crypto from 'crypto';
 import { ForgotPasswordEmail } from '../emails/ForgotPasswordEmail';
 import { VerifyAccountEmail } from '../emails/VerifyAccountEmail';
-import { type SignupDto } from '../zod-schemas/signup.schema';
-import { type LoginDto } from '../zod-schemas/login.schema';
-import { type VerificationDto } from '../zod-schemas/verification.schema';
-import { type ResetPasswordDto } from '../zod-schemas/password.schema';
-import { RequestRecoverAccountEmail } from 'src/emails/RequestRecoverAccountEmail';
+import type {
+  SignupDto,
+  LoginDto,
+  VerificationDto,
+  ResetPasswordDto,
+} from './auth.validation.schema';
+import { RequestRecoverAccountEmail } from '../emails/RequestRecoverAccountEmail';
 
 @Injectable()
 export class AuthService {
@@ -206,9 +208,9 @@ export class AuthService {
       );
     }
 
-    if (asAdmin && user.role !== UserRole.ADMIN) {
+    if (asAdmin && user.role !== 'admin') {
       throw new UnauthorizedException('Unauthorized, you are not an admin');
-    } else if (!asAdmin && user.role !== UserRole.USER) {
+    } else if (!asAdmin && user.role !== 'user') {
       throw new UnauthorizedException('Unauthorized, you are not a user');
     }
 
@@ -259,12 +261,7 @@ export class AuthService {
     if (existedUser)
       throw new ConflictException('This email has been already taken');
 
-    const user = await this.userModel.create({
-      name,
-      email,
-      password,
-      role: UserRole.USER,
-    });
+    const user = await this.userModel.create({ name, email, password });
 
     delete user.password;
 

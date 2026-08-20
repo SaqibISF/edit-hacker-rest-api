@@ -6,6 +6,7 @@ import {
   PipeTransform,
 } from '@nestjs/common';
 import { Types } from 'mongoose';
+import { identifierSchema } from '../../zod-schemas/identifier.schema';
 
 @Injectable()
 export class IdentifierPipe implements PipeTransform<
@@ -29,14 +30,14 @@ export class IdentifierPipe implements PipeTransform<
     if (!value)
       throw new BadRequestException(`Identifier is required ${fieldName}`);
 
-    try {
-      if (Types.ObjectId.isValid(value)) {
-        return Types.ObjectId.createFromHexString(value);
-      } else return value;
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Invalid identifier';
-      throw new BadRequestException(`Invalid ${fieldName} ${message}`);
-    }
+    const {
+      success,
+      data: identifier,
+      error,
+    } = identifierSchema.safeParse(value);
+
+    if (!success) throw new BadRequestException(error.issues[0].message);
+
+    return identifier;
   }
 }

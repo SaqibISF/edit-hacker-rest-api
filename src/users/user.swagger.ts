@@ -23,6 +23,13 @@ const USER_SCHEMA_PROPERTIES = {
     lastLoginAt: { type: 'string', format: 'date-time' },
     bannedAt: { type: 'string', format: 'date-time' },
     banReason: { type: 'string' },
+    provider: { type: 'string', enum: ['local', 'google', 'github'] },
+    providerId: { type: 'string', nullable: true },
+    newsletter: { type: 'boolean' },
+    savedTools: {
+      type: 'array',
+      items: { type: 'string' },
+    },
     deletedAt: { type: 'string', format: 'date-time' },
     createdAt: { type: 'string', format: 'date-time' },
     updatedAt: { type: 'string', format: 'date-time' },
@@ -40,6 +47,10 @@ const USER_EXAMPLE = {
   emailVerifiedAt: TIMESTAMP_EXAMPLE,
   passwordResetAt: TIMESTAMP_EXAMPLE,
   lastLoginAt: TIMESTAMP_EXAMPLE,
+  provider: 'local',
+  providerId: null,
+  newsletter: false,
+  savedTools: ['60d0fe4f5311236168a109ca'],
   createdAt: TIMESTAMP_EXAMPLE,
   updatedAt: TIMESTAMP_EXAMPLE,
 };
@@ -67,7 +78,7 @@ const UnauthorizedResponse = ApiResponse({
   },
 });
 
-export function ApiGetUser() {
+export function ApiGetUserDocs() {
   return applyDecorators(
     ApiOperation({ summary: 'Get current user profile' }),
     ApiResponse({
@@ -95,7 +106,7 @@ export function ApiGetUser() {
   );
 }
 
-export function ApiUpdateUser() {
+export function ApiUpdateUserDocs() {
   return applyDecorators(
     ApiOperation({ summary: 'Update current user profile' }),
     ApiBody({
@@ -104,8 +115,9 @@ export function ApiUpdateUser() {
         properties: {
           name: { type: 'string' },
           mobile: { type: 'string' },
+          newsletter: { type: 'boolean' },
         },
-        example: { name: 'John Doe', mobile: '+1234567890' },
+        example: { name: 'John Doe', mobile: '+1234567890', newsletter: true },
       },
     }),
     ApiResponse({
@@ -156,7 +168,7 @@ export function ApiUpdateUser() {
   );
 }
 
-export function ApiUpdateUserAvatar() {
+export function ApiUpdateUserAvatarDocs() {
   return applyDecorators(
     ApiOperation({ summary: 'Update user avatar' }),
     ApiConsumes('multipart/form-data'),
@@ -216,7 +228,7 @@ export function ApiUpdateUserAvatar() {
   );
 }
 
-export function ApiRemoveUserAvatar() {
+export function ApiRemoveUserAvatarDocs() {
   return applyDecorators(
     ApiOperation({ summary: 'Remove user avatar' }),
     ApiResponse({
@@ -279,7 +291,7 @@ export function ApiRemoveUserAvatar() {
   );
 }
 
-export function ApiDeleteUser() {
+export function ApiDeleteUserDocs() {
   return applyDecorators(
     ApiOperation({ summary: 'Delete user account' }),
     ApiResponse({
@@ -343,6 +355,132 @@ export function ApiDeleteUser() {
               success: false,
               message: 'User already deleted',
               statusCode: HttpStatus.CONFLICT,
+              timestamp: TIMESTAMP_EXAMPLE,
+            },
+          },
+        },
+      },
+    }),
+    UnauthorizedResponse,
+  );
+}
+
+export function ApiAddSavedToolsDocs() {
+  return applyDecorators(
+    ApiOperation({ summary: 'Add saved tools to user profile' }),
+    ApiBody({
+      schema: {
+        type: 'object',
+        properties: {
+          savedTools: {
+            type: 'array',
+            items: { type: 'string' },
+          },
+        },
+        example: { savedTools: ['60d0fe4f5311236168a109ca'] },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.OK,
+      description: 'Saved tools added successfully',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              success: { type: 'true' },
+              message: { type: 'string' },
+              user: USER_SCHEMA_PROPERTIES,
+            },
+            example: {
+              success: true,
+              message: 'Saved tools added successfully',
+              user: USER_EXAMPLE,
+            },
+          },
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.NOT_FOUND,
+      description: 'User is not found',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              success: { type: 'false' },
+              message: { type: 'string' },
+              statusCode: { type: 'number' },
+              timestamp: { type: 'string' },
+            },
+            example: {
+              success: false,
+              message: 'User is not found',
+              statusCode: HttpStatus.NOT_FOUND,
+              timestamp: TIMESTAMP_EXAMPLE,
+            },
+          },
+        },
+      },
+    }),
+    UnauthorizedResponse,
+  );
+}
+
+export function ApiRemoveSavedToolsDocs() {
+  return applyDecorators(
+    ApiOperation({ summary: 'Remove saved tools from user profile' }),
+    ApiBody({
+      schema: {
+        type: 'object',
+        properties: {
+          savedTools: {
+            type: 'array',
+            items: { type: 'string' },
+          },
+        },
+        example: { savedTools: ['60d0fe4f5311236168a109ca'] },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.OK,
+      description: 'Saved tools removed successfully',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              success: { type: 'true' },
+              message: { type: 'string' },
+              user: USER_SCHEMA_PROPERTIES,
+            },
+            example: {
+              success: true,
+              message: 'Saved tools removed successfully',
+              user: USER_EXAMPLE,
+            },
+          },
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.NOT_FOUND,
+      description: 'User is not found',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              success: { type: 'false' },
+              message: { type: 'string' },
+              statusCode: { type: 'number' },
+              timestamp: { type: 'string' },
+            },
+            example: {
+              success: false,
+              message: 'User is not found',
+              statusCode: HttpStatus.NOT_FOUND,
               timestamp: TIMESTAMP_EXAMPLE,
             },
           },

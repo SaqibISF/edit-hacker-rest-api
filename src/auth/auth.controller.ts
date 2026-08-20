@@ -26,24 +26,21 @@ import {
   ApiForgotPassword,
   ApiResetPassword,
 } from './auth.decorators';
-import { loginSchema, type LoginDto } from '../zod-schemas/login.schema';
-import { signupSchema, type SignupDto } from '../zod-schemas/signup.schema';
 import {
-  emailOnlySchema,
-  type EmailOnlyDto,
-} from '../zod-schemas/email-only.schema';
-import {
+  loginSchema,
+  type LoginDto,
+  signupSchema,
+  type SignupDto,
   updatePasswordSchema,
   resetPasswordSchema,
   type UpdatePasswordDto,
   type ResetPasswordDto,
-} from '../zod-schemas/password.schema';
-import {
   verificationSchema,
   type VerificationDto,
-} from '../zod-schemas/verification.schema';
+} from './auth.validation.schema';
 import { ZodValidationPipe } from '../pipes/zod-validation/zod-validation.pipe';
 import { ApiTags } from '@nestjs/swagger';
+import { EmailPipe } from '../pipes/email/email.pipe';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -133,10 +130,11 @@ export class AuthController {
 
   @ApiResendEmailVerification()
   @Post('resend-account-verification-email')
-  @UsePipes(new ZodValidationPipe(emailOnlySchema))
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Account verification email resent successfully')
-  async resendAccountVerificationEmail(@Body() { email }: EmailOnlyDto) {
+  async resendAccountVerificationEmail(
+    @Body('email', EmailPipe) email: string,
+  ) {
     await this.authService.resendAccountVerificationEmail(email);
     return {};
   }
@@ -153,10 +151,9 @@ export class AuthController {
 
   @ApiRequestAccountRecovery()
   @Post('request-account-recovery')
-  @UsePipes(new ZodValidationPipe(emailOnlySchema))
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Request for account recovery successfully submitted')
-  async requestAccountRecovery(@Body() { email }: EmailOnlyDto) {
+  async requestAccountRecovery(@Body('email', EmailPipe) email: string) {
     await this.authService.requestAccountRecovery(email);
     return {};
   }
@@ -186,12 +183,11 @@ export class AuthController {
 
   @ApiForgotPassword()
   @Post('forgot-password')
-  @UsePipes(new ZodValidationPipe(emailOnlySchema))
   @HttpCode(HttpStatus.OK)
   @ResponseMessage(
     'Password reset request successfully submitted, please check your email',
   )
-  async forgotPassword(@Body() { email }: EmailOnlyDto) {
+  async forgotPassword(@Body('email', EmailPipe) email: string) {
     await this.authService.forgotPassword(email);
     return {};
   }

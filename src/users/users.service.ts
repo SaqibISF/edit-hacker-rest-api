@@ -20,10 +20,12 @@ import {
   RevokedToken,
   RevokedTokenDocument,
 } from '../auth/revoked-tokens.schema';
-import { UpdateUserByAdminDto } from '../zod-schemas/update-user-by-admin.schema';
-import { UpdateUserDto } from '../zod-schemas/update-user.schema';
-import { UsersQueryDto } from '../zod-schemas/users-query.schema';
-import fs from 'fs';
+import type {
+  UsersQueryDto,
+  UpdateUserDto,
+  UpdateUserByAdminDto,
+} from './user.validation.schema';
+import { removeFileFromStorage } from '../lib/remove-file';
 
 @Injectable()
 export class UsersService {
@@ -186,6 +188,40 @@ export class UsersService {
     return { user };
   }
 
+  async addSavedTools(userId: Types.ObjectId, savedTools: Types.ObjectId[]) {
+    const user = await this.userModel
+      .findByIdAndUpdate(
+        userId,
+        { $addToSet: { savedTools: { $each: savedTools } } },
+        { returnDocument: 'after' },
+      )
+      .lean()
+      .exec();
+
+    if (!user) {
+      throw new NotFoundException('User is not found');
+    }
+
+    return { user };
+  }
+
+  async removeSavedTools(userId: Types.ObjectId, savedTools: Types.ObjectId[]) {
+    const user = await this.userModel
+      .findByIdAndUpdate(
+        userId,
+        { $pull: { savedTools: { $in: savedTools } } },
+        { returnDocument: 'after' },
+      )
+      .lean()
+      .exec();
+
+    if (!user) {
+      throw new NotFoundException('User is not found');
+    }
+
+    return { user };
+  }
+
   async updateUserAvatar(userId: Types.ObjectId, avatarUrl: string) {
     const user = await this.userModel
       .findByIdAndUpdate(userId, { avatarUrl }, { returnDocument: 'before' })
@@ -196,15 +232,7 @@ export class UsersService {
       throw new NotFoundException('User is not found');
     }
 
-    if (user.avatarUrl) {
-      const filePath = `public\\uploads\\${new URL(user.avatarUrl).pathname}`;
-
-      void fs.promises.unlink(filePath).catch((err: NodeJS.ErrnoException) => {
-        if (err.code !== 'ENOENT') {
-          console.error(`Failed to delete file at ${filePath}:`, err);
-        }
-      });
-    }
+    removeFileFromStorage(user.avatarUrl);
 
     user.avatarUrl = avatarUrl;
 
@@ -229,13 +257,7 @@ export class UsersService {
       throw new NotFoundException('Avatar is not found');
     }
 
-    const filePath = `public\\uploads\\${new URL(user.avatarUrl).pathname}`;
-
-    void fs.promises.unlink(filePath).catch((err: NodeJS.ErrnoException) => {
-      if (err.code !== 'ENOENT') {
-        console.error(`Failed to delete file at ${filePath}:`, err);
-      }
-    });
+    removeFileFromStorage(user.avatarUrl);
 
     delete user.avatarUrl;
 
