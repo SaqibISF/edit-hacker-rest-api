@@ -12,6 +12,7 @@ import { EnvService } from './env/env.service';
 import { LoggerMiddleware } from './middlewares/logger/logger.middleware';
 import { AuthMiddleware } from './auth/auth.middleware';
 import { FormDataConfigModule } from './form-data-config/form-data-config.module';
+import { ToolsModule } from './tools/tools.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { FormDataConfigModule } from './form-data-config/form-data-config.module
     }),
     AuthModule,
     UsersModule,
+    ToolsModule,
   ],
   providers: [
     { provide: APP_INTERCEPTOR, useClass: TransformInterceptor },
