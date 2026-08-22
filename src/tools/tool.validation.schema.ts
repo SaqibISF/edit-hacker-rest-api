@@ -4,6 +4,8 @@ import {
   toolPlateForms,
   toolPricingModels,
   toolStatuses,
+  toolListingType,
+  toolBillingCycles,
 } from '../tools/tool.schema';
 import { objectIdSchema } from '../zod-schemas/objectId.schema';
 import { zfd } from 'zod-form-data';
@@ -75,5 +77,26 @@ export type RemoveToolScreenshotsDto = z.infer<
   typeof removeToolScreenshotsSchema
 >;
 
-export const updateToolSchema = createToolSchema.partial();
+export const updateToolSchema = createToolSchema.partial().extend({
+  plans: z
+    .array(
+      z.object({
+        name: z.string().trim().min(1),
+        price: z.number().min(0),
+        billingCycle: z.enum(toolBillingCycles).default('monthly'),
+        features: z.array(z.string().trim()).default([]),
+        isPopular: z.boolean().default(false),
+        trialDays: z.number().min(0).default(0),
+      }),
+    )
+    .optional(),
+  status: z.enum(toolStatuses).optional(),
+  rejectionReason: z.string().trim().optional(),
+  listingType: z.enum(toolListingType).optional(),
+  isFeatured: z.boolean().optional(),
+  isSponsored: z.boolean().optional(),
+  isVerified: z.boolean().optional(),
+  featuredUntil: z.iso.datetime().optional(),
+  isActive: z.boolean().optional(),
+});
 export type UpdateToolDto = z.infer<typeof updateToolSchema>;

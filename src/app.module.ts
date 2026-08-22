@@ -13,6 +13,7 @@ import { LoggerMiddleware } from './middlewares/logger/logger.middleware';
 import { AuthMiddleware } from './auth/auth.middleware';
 import { FormDataConfigModule } from './form-data-config/form-data-config.module';
 import { ToolsModule } from './tools/tools.module';
+import { CategoriesModule } from './categories/categories.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { ToolsModule } from './tools/tools.module';
     AuthModule,
     UsersModule,
     ToolsModule,
+    CategoriesModule,
   ],
   providers: [
     { provide: APP_INTERCEPTOR, useClass: TransformInterceptor },

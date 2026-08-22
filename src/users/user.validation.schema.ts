@@ -5,7 +5,7 @@ import { nameSchema } from '../zod-schemas/name.schema';
 import { mobileSchema } from '../zod-schemas/mobile.schema';
 import { imageFileSchema } from '../zod-schemas/file.schema';
 import { zfd } from 'zod-form-data';
-import { objectIdSchema } from 'src/zod-schemas/objectId.schema';
+import { objectIdSchema } from '../zod-schemas/objectId.schema';
 
 export const usersQuerySchema = baseQuerySchema.extend({
   role: z.literal(userRoles).optional(),

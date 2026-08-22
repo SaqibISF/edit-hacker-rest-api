@@ -248,9 +248,8 @@ ToolSchema.index({
   name: 'text',
   slug: 'text',
   tagline: 'text',
+  description: 'text',
   tags: 'text',
-  metaTitle: 'text',
-  metaDescription: 'text',
 });
 
 ToolSchema.plugin(mongooseAggregatePaginate);

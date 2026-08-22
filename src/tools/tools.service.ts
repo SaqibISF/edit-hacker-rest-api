@@ -3,10 +3,11 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Tool, ToolDocument } from './tool.schema';
 import {
   _QueryFilterLooseId,
+  Model,
   PaginateOptions,
   PrePaginatePipelineStage,
   Types,
@@ -21,12 +22,19 @@ import {
   removeFileFromStorage,
   removeFilesFromStorage,
 } from '../lib/remove-file';
+import { Category, CategoryDocument } from '../categories/category.schema';
+import { Connection } from 'mongoose';
 
 @Injectable()
 export class ToolsService {
   constructor(
     @InjectModel(Tool.name)
     private readonly toolModel: AggregatePaginateModel<ToolDocument>,
+
+    @InjectModel(Category.name)
+    private readonly categoryModel: Model<CategoryDocument>,
+
+    @InjectConnection() private readonly connection: Connection,
   ) {}
 
   async getTools({
@@ -105,12 +113,31 @@ export class ToolsService {
         `Slug "${createToolDto.slug}" is already taken`,
       );
 
-    const tool = await this.toolModel.create({
-      ...createToolDto,
-      submittedBy,
-    });
+    const session = await this.connection.startSession();
 
-    return { tool };
+    try {
+      session.startTransaction();
+
+      const [tool] = await this.toolModel.create(
+        [{ ...createToolDto, submittedBy }],
+        { session },
+      );
+
+      await this.categoryModel.updateOne(
+        { _id: createToolDto.category },
+        { $inc: { toolCount: 1 } },
+        { session },
+      );
+
+      await session.commitTransaction();
+
+      return { tool };
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      await session.endSession();
+    }
   }
 
   async updateToolLogo(toolId: Types.ObjectId, logo: string) {
@@ -120,6 +147,7 @@ export class ToolsService {
       .exec();
 
     if (!tool) {
+      removeFileFromStorage(logo);
       throw new NotFoundException('Tool is not found');
     }
 
@@ -157,6 +185,7 @@ export class ToolsService {
       .exec();
 
     if (!tool) {
+      removeFileFromStorage(coverImage);
       throw new NotFoundException('Tool is not found');
     }
 
@@ -214,11 +243,11 @@ export class ToolsService {
       .lean()
       .exec();
 
+    removeFilesFromStorage(screenshots);
+
     if (!tool) {
       throw new NotFoundException('Tool is not found');
     }
-
-    removeFilesFromStorage(screenshots);
 
     return {};
   }
@@ -237,19 +266,38 @@ export class ToolsService {
   }
 
   async deleteTool(toolId: Types.ObjectId) {
-    const tool = await this.toolModel
-      .findByIdAndDelete(toolId, { returnDocument: 'before' })
-      .select('_id')
-      .lean()
-      .exec();
+    const session = await this.connection.startSession();
 
-    if (!tool) {
-      throw new NotFoundException('Tool is not found');
+    try {
+      session.startTransaction();
+
+      const tool = await this.toolModel
+        .findByIdAndDelete(toolId, { returnDocument: 'before', session })
+        .select('_id')
+        .lean()
+        .exec();
+
+      if (!tool) {
+        throw new NotFoundException('Tool is not found');
+      }
+
+      await this.categoryModel.updateOne(
+        { _id: tool.category },
+        { $inc: { toolCount: -1 } },
+        { session },
+      );
+
+      removeFileFromStorage(tool.logo);
+      removeFileFromStorage(tool.coverImage);
+      removeFilesFromStorage(tool.screenshots);
+
+      await session.commitTransaction();
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      await session.endSession();
     }
-
-    removeFileFromStorage(tool.logo);
-    removeFileFromStorage(tool.coverImage);
-    removeFilesFromStorage(tool.screenshots);
 
     return {};
   }
