@@ -16,6 +16,23 @@ import {
 } from './tool.schema';
 import { sortOrders } from '../zod-schemas/base-query.schema';
 
+const planSchemaProperties = {
+  _id: { type: 'string', example: '60d0fe4f5311236168a109ce' },
+  name: { type: 'string', example: 'Pro Plan' },
+  price: { type: 'number', example: 2900 },
+  billingCycle: {
+    type: 'string',
+    enum: [...toolBillingCycles],
+    example: 'monthly',
+  },
+  features: {
+    type: 'array',
+    items: { type: 'string', example: 'Unlimited access' },
+  },
+  isPopular: { type: 'boolean', example: false },
+  trialDays: { type: 'number', example: 14 },
+};
+
 const toolSchemaProperties = {
   _id: { type: 'string', example: '60d0fe4f5311236168a109ca' },
   name: { type: 'string', example: 'Tool Name' },
@@ -25,29 +42,14 @@ const toolSchemaProperties = {
     type: 'string',
     example: 'Detailed description of the tool...',
   },
-  logo: {
-    type: 'string',
-    example: 'https://example.com/logo.png',
-  },
-  coverImage: {
-    type: 'string',
-    example: 'https://example.com/cover.png',
-  },
+  logo: { type: 'string', example: 'https://example.com/logo.png' },
+  coverImage: { type: 'string', example: 'https://example.com/cover.png' },
   screenshots: {
     type: 'array',
-    items: {
-      type: 'string',
-      example: 'https://example.com/screenshot1.png',
-    },
+    items: { type: 'string', example: 'https://example.com/screenshot1.png' },
   },
-  category: {
-    type: 'string',
-    example: '60d0fe4f5311236168a109cb',
-  },
-  tags: {
-    type: 'array',
-    items: { type: 'string', example: 'seo' },
-  },
+  category: { type: 'string', example: '60d0fe4f5311236168a109cb' },
+  tags: { type: 'array', items: { type: 'string', example: 'seo' } },
   pricingModel: {
     type: 'string',
     enum: [...toolPricingModels],
@@ -56,58 +58,31 @@ const toolSchemaProperties = {
   startingPrice: { type: 'number', example: 0 },
   plans: {
     type: 'array',
-    items: {
-      type: 'object',
-      properties: {
-        name: { type: 'string', example: 'Pro Plan' },
-        price: { type: 'number', example: 2900 },
-        billingCycle: {
-          type: 'string',
-          enum: [...toolBillingCycles],
-          example: 'monthly',
-        },
-        features: {
-          type: 'array',
-          items: {
-            type: 'string',
-            example: 'Unlimited access',
-          },
-        },
-        isPopular: { type: 'boolean', example: false },
-        trialDays: { type: 'number', example: 14 },
-      },
-    },
+    items: { type: 'object', properties: planSchemaProperties },
   },
   platforms: {
     type: 'array',
-    items: {
-      type: 'string',
-      enum: [...toolPlateForms],
-      example: 'web',
-    },
+    items: { type: 'string', enum: [...toolPlateForms], example: 'web' },
   },
   links: {
     type: 'object',
     properties: {
       website: { type: 'string', example: 'https://example.com' },
-      twitter: {
+      twitter: { type: 'string', example: 'https://twitter.com/example' },
+      instagram: { type: 'string', example: 'https://instagram.com/example' },
+      linkedIn: { type: 'string', example: 'https://linkedin.com/example' },
+      youtube: { type: 'string', example: 'https://youtube.com/example' },
+      discord: { type: 'string', example: 'https://discord.gg/example' },
+      github: { type: 'string', example: 'https://github.com/example' },
+      appStore: {
         type: 'string',
-        example: 'https://twitter.com/example',
+        example: 'https://apps.apple.com/app/example',
       },
-      instagram: { type: 'string' },
-      linkedIn: { type: 'string' },
-      youtube: { type: 'string' },
-      discord: { type: 'string' },
-      github: { type: 'string' },
-      appStore: { type: 'string' },
       playStore: { type: 'string' },
       apiDocs: { type: 'string' },
     },
   },
-  affiliateUrl: {
-    type: 'string',
-    example: 'https://example.com/affiliate',
-  },
+  affiliateUrl: { type: 'string', example: 'https://example.com/affiliate' },
   rating: {
     type: 'object',
     properties: {
@@ -118,23 +93,10 @@ const toolSchemaProperties = {
   viewCount: { type: 'number', example: 1500 },
   clickCount: { type: 'number', example: 350 },
   saveCount: { type: 'number', example: 120 },
-  submittedBy: {
-    type: 'string',
-    example: '60d0fe4f5311236168a109cc',
-  },
-  status: {
-    type: 'string',
-    enum: [...toolStatuses],
-    example: 'approved',
-  },
-  rejectionReason: {
-    type: 'string',
-    example: 'Incomplete information',
-  },
-  reviewedBy: {
-    type: 'string',
-    example: '60d0fe4f5311236168a109cd',
-  },
+  submittedBy: { type: 'string', example: '60d0fe4f5311236168a109cc' },
+  status: { type: 'string', enum: [...toolStatuses], example: 'approved' },
+  rejectionReason: { type: 'string', example: 'Incomplete information' },
+  reviewedBy: { type: 'string', example: '60d0fe4f5311236168a109cd' },
   reviewedAt: { type: 'string', format: 'date-time' },
   listingType: {
     type: 'string',
@@ -145,14 +107,8 @@ const toolSchemaProperties = {
   isSponsored: { type: 'boolean', example: false },
   isVerified: { type: 'boolean', example: true },
   featuredUntil: { type: 'string', format: 'date-time' },
-  metaTitle: {
-    type: 'string',
-    example: 'Tool Name - Best tool for you',
-  },
-  metaDescription: {
-    type: 'string',
-    example: 'Detailed description for SEO.',
-  },
+  metaTitle: { type: 'string', example: 'Tool Name - Best tool for you' },
+  metaDescription: { type: 'string', example: 'Detailed description for SEO.' },
   launchDate: { type: 'string', format: 'date-time' },
   isActive: { type: 'boolean', example: true },
   createdAt: { type: 'string', format: 'date-time' },
@@ -252,10 +208,7 @@ export function ApiGetToolsDocs() {
           message: { type: 'string', example: 'Tools successfully retrieved' },
           tools: {
             type: 'array',
-            items: {
-              type: 'object',
-              properties: toolSchemaProperties,
-            },
+            items: { type: 'object', properties: toolSchemaProperties },
           },
           meta: {
             type: 'object',
@@ -295,10 +248,7 @@ export function ApiGetToolDocs() {
         properties: {
           success: { type: 'boolean', example: true },
           message: { type: 'string', example: 'Tool successfully retrieved' },
-          tool: {
-            type: 'object',
-            properties: toolSchemaProperties,
-          },
+          tool: { type: 'object', properties: toolSchemaProperties },
         },
       },
     }),
@@ -381,10 +331,7 @@ export function ApiCreateToolDocs() {
         properties: {
           success: { type: 'boolean', example: true },
           message: { type: 'string', example: 'Tool created successfully' },
-          tool: {
-            type: 'object',
-            properties: toolSchemaProperties,
-          },
+          tool: { type: 'object', properties: toolSchemaProperties },
         },
       },
     }),
@@ -407,12 +354,7 @@ export function ApiUpdateToolLogoDocs() {
     ApiBody({
       schema: {
         type: 'object',
-        properties: {
-          logo: {
-            type: 'string',
-            format: 'binary',
-          },
-        },
+        properties: { logo: { type: 'string', format: 'binary' } },
       },
     }),
     ApiResponse({
@@ -423,10 +365,7 @@ export function ApiUpdateToolLogoDocs() {
         properties: {
           success: { type: 'boolean', example: true },
           message: { type: 'string', example: 'Logo updated successfully' },
-          tool: {
-            type: 'object',
-            properties: toolSchemaProperties,
-          },
+          tool: { type: 'object', properties: toolSchemaProperties },
         },
       },
     }),
@@ -475,12 +414,7 @@ export function ApiUpdateToolCoverImageDocs() {
     ApiBody({
       schema: {
         type: 'object',
-        properties: {
-          coverImage: {
-            type: 'string',
-            format: 'binary',
-          },
-        },
+        properties: { coverImage: { type: 'string', format: 'binary' } },
       },
     }),
     ApiResponse({
@@ -494,10 +428,7 @@ export function ApiUpdateToolCoverImageDocs() {
             type: 'string',
             example: 'Cover image updated successfully',
           },
-          tool: {
-            type: 'object',
-            properties: toolSchemaProperties,
-          },
+          tool: { type: 'object', properties: toolSchemaProperties },
         },
       },
     }),
@@ -552,10 +483,7 @@ export function ApiUpdateToolScreenshotsDocs() {
         properties: {
           screenshots: {
             type: 'array',
-            items: {
-              type: 'string',
-              format: 'binary',
-            },
+            items: { type: 'string', format: 'binary' },
           },
         },
       },
@@ -571,10 +499,7 @@ export function ApiUpdateToolScreenshotsDocs() {
             type: 'string',
             example: 'Screenshots updated successfully',
           },
-          tool: {
-            type: 'object',
-            properties: toolSchemaProperties,
-          },
+          tool: { type: 'object', properties: toolSchemaProperties },
         },
       },
     }),
@@ -667,6 +592,14 @@ export function ApiUpdateToolDocs() {
           metaTitle: 'SuperTool - The ultimate AI assistant',
           metaDescription: 'SuperTool helps you work faster using AI.',
           launchDate: '2023-10-01T12:00:00.000Z',
+          status: 'approved',
+          rejectionReason: 'Not enough information provided initially',
+          listingType: 'featured',
+          isFeatured: true,
+          isSponsored: false,
+          isVerified: true,
+          featuredUntil: '2026-12-31T23:59:59.999Z',
+          isActive: true,
         },
       },
       description: 'Partial payload of the tool fields to update',
@@ -679,10 +612,7 @@ export function ApiUpdateToolDocs() {
         properties: {
           success: { type: 'boolean', example: true },
           message: { type: 'string', example: 'Tool updated successfully' },
-          tool: {
-            type: 'object',
-            properties: toolSchemaProperties,
-          },
+          tool: { type: 'object', properties: toolSchemaProperties },
         },
       },
     }),
@@ -710,6 +640,125 @@ export function ApiDeleteToolDocs() {
         properties: {
           success: { type: 'boolean', example: true },
           message: { type: 'string', example: 'Tool deleted successfully' },
+        },
+      },
+    }),
+    ApiUnauthorizedErrorResponse(),
+    ApiForbiddenErrorResponse(),
+    ApiValidationErrorResponse(),
+    ApiNotFoundErrorResponse(),
+  );
+}
+
+export function ApiAddToolPlanDocs() {
+  return applyDecorators(
+    ApiOperation({ summary: 'Add a pricing plan to a tool (Admin)' }),
+    ApiParam({
+      name: 'id',
+      type: String,
+      description: 'MongoDB ID of the tool',
+    }),
+    ApiBody({
+      schema: {
+        type: 'object',
+        example: {
+          name: 'Pro Plan',
+          price: 2900,
+          billingCycle: 'monthly',
+          features: ['All basic features', 'Priority support', 'Analytics'],
+          isPopular: true,
+          trialDays: 14,
+        },
+      },
+    }),
+    ApiResponse({
+      status: HttpStatus.OK,
+      description: 'Tool plan added successfully',
+      schema: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean', example: true },
+          message: { type: 'string', example: 'Tool plan added successfully' },
+          plan: { type: 'object', properties: planSchemaProperties },
+        },
+      },
+    }),
+    ApiUnauthorizedErrorResponse(),
+    ApiForbiddenErrorResponse(),
+    ApiValidationErrorResponse(),
+    ApiNotFoundErrorResponse(),
+  );
+}
+
+export function ApiUpdateToolPlanDocs() {
+  return applyDecorators(
+    ApiOperation({ summary: 'Update a pricing plan of a tool (Admin)' }),
+    ApiParam({
+      name: 'id',
+      type: String,
+      description: 'MongoDB ID of the tool',
+    }),
+    ApiParam({
+      name: 'planId',
+      type: String,
+      description: 'MongoDB ID of the plan subdocument',
+    }),
+    ApiBody({
+      schema: {
+        type: 'object',
+        example: {
+          price: 3900,
+          isPopular: false,
+        },
+      },
+      description: 'Partial payload of the plan fields to update',
+    }),
+    ApiResponse({
+      status: HttpStatus.OK,
+      description: 'Tool plan updated successfully',
+      schema: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean', example: true },
+          message: {
+            type: 'string',
+            example: 'Tool plan updated successfully',
+          },
+          plan: { type: 'object', properties: planSchemaProperties },
+        },
+      },
+    }),
+    ApiUnauthorizedErrorResponse(),
+    ApiForbiddenErrorResponse(),
+    ApiValidationErrorResponse(),
+    ApiNotFoundErrorResponse(),
+  );
+}
+
+export function ApiDeleteToolPlanDocs() {
+  return applyDecorators(
+    ApiOperation({ summary: 'Delete a pricing plan from a tool (Admin)' }),
+    ApiParam({
+      name: 'id',
+      type: String,
+      description: 'MongoDB ID of the tool',
+    }),
+    ApiParam({
+      name: 'planId',
+      type: String,
+      description: 'MongoDB ID of the plan subdocument',
+    }),
+    ApiResponse({
+      status: HttpStatus.OK,
+      description: 'Tool plan removed successfully',
+      schema: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean', example: true },
+          message: {
+            type: 'string',
+            example: 'Tool plan removed successfully',
+          },
         },
       },
     }),

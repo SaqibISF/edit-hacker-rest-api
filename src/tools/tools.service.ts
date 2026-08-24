@@ -17,6 +17,8 @@ import type {
   CreateToolDto,
   UpdateToolDto,
   ToolsQueryDto,
+  AddToolPlanDto,
+  UpdateToolPlanDto,
 } from './tool.validation.schema';
 import {
   removeFileFromStorage,
@@ -244,6 +246,77 @@ export class ToolsService {
       .exec();
 
     removeFilesFromStorage(screenshots);
+
+    if (!tool) {
+      throw new NotFoundException('Tool is not found');
+    }
+
+    return {};
+  }
+
+  async addToolPlan(toolId: Types.ObjectId, addToolPlanDto: AddToolPlanDto) {
+    const tool = await this.toolModel
+      .findByIdAndUpdate(
+        toolId,
+        { $push: { plans: addToolPlanDto } },
+        {
+          projection: { plans: { $slice: -1 } },
+          returnDocument: 'after',
+        },
+      )
+      .lean()
+      .exec();
+
+    if (!tool) throw new NotFoundException('Tool is not found');
+
+    const [plan] = tool.plans;
+
+    return { plan };
+  }
+
+  async updateToolPlan(
+    toolId: Types.ObjectId,
+    planId: Types.ObjectId,
+    updateToolPlanDto: UpdateToolPlanDto,
+  ) {
+    const payload = Object.keys(updateToolPlanDto).reduce(
+      (acc, key) => {
+        acc[`plans.$.${key}`] = updateToolPlanDto[key];
+        return acc;
+      },
+      {} as Record<string, unknown>,
+    );
+
+    const tool = await this.toolModel
+      .findOneAndUpdate(
+        { _id: toolId, 'plans._id': planId },
+        { $set: payload },
+        {
+          returnDocument: 'after',
+          projection: { plans: { $elemMatch: { _id: planId } } },
+        },
+      )
+      .lean()
+      .exec();
+
+    if (!tool) {
+      throw new NotFoundException('Tool is not found');
+    }
+
+    const [plan] = tool.plans;
+
+    return { plan };
+  }
+
+  async deleteToolPlan(toolId: Types.ObjectId, planId: Types.ObjectId) {
+    const tool = await this.toolModel
+      .findByIdAndUpdate(
+        toolId,
+        { $pull: { plans: { _id: planId } } },
+        { returnDocument: 'after' },
+      )
+      .lean()
+      .exec();
 
     if (!tool) {
       throw new NotFoundException('Tool is not found');

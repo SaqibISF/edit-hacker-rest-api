@@ -77,19 +77,20 @@ export type RemoveToolScreenshotsDto = z.infer<
   typeof removeToolScreenshotsSchema
 >;
 
+export const addToolPlanSchema = z.object({
+  name: z.string().trim().min(1),
+  price: z.number().min(0),
+  features: z.array(z.string().trim()).optional(),
+  billingCycle: z.literal(toolBillingCycles).optional(),
+  isPopular: z.boolean().optional(),
+  trialDays: z.number().min(0).optional(),
+});
+export type AddToolPlanDto = z.infer<typeof addToolPlanSchema>;
+
+export const updateToolPlanSchema = addToolPlanSchema.partial();
+export type UpdateToolPlanDto = z.infer<typeof updateToolPlanSchema>;
+
 export const updateToolSchema = createToolSchema.partial().extend({
-  plans: z
-    .array(
-      z.object({
-        name: z.string().trim().min(1),
-        price: z.number().min(0),
-        billingCycle: z.enum(toolBillingCycles).default('monthly'),
-        features: z.array(z.string().trim()).default([]),
-        isPopular: z.boolean().default(false),
-        trialDays: z.number().min(0).default(0),
-      }),
-    )
-    .optional(),
   status: z.enum(toolStatuses).optional(),
   rejectionReason: z.string().trim().optional(),
   listingType: z.enum(toolListingType).optional(),

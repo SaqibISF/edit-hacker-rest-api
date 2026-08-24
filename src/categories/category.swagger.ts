@@ -28,23 +28,6 @@ const categorySchemaProperties = {
   updatedAt: { type: 'string', format: 'date-time' },
 };
 
-// const categoryExample = {
-//   _id: '60d0fe4f5311236168a109ca',
-//   name: 'AI Tools',
-//   slug: 'ai-tools',
-//   description: 'Collection of AI tools',
-//   icon: 'https://example.com/icon.png',
-//   coverImage: 'https://example.com/cover.png',
-//   metaTitle: 'Best AI Tools',
-//   metaDescription: 'Find the best AI tools here',
-//   toolCount: 5,
-//   isFeatured: true,
-//   order: 1,
-//   isActive: true,
-//   createdAt: TIMESTAMP_EXAMPLE,
-//   updatedAt: TIMESTAMP_EXAMPLE,
-// };
-
 const ErrorResponse = (
   status: number,
   description: string,

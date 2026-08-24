@@ -34,6 +34,10 @@ import {
   type UpdateToolScreenshotsDto,
   removeToolScreenshotsSchema,
   type RemoveToolScreenshotsDto,
+  addToolPlanSchema,
+  type AddToolPlanDto,
+  updateToolPlanSchema,
+  type UpdateToolPlanDto,
 } from './tool.validation.schema';
 import { SlugPipe } from '../pipes/slug/slug.pipe';
 import { Roles } from '../decorators/roles.decorator';
@@ -50,6 +54,9 @@ import {
   ApiRemoveToolScreenshotsDocs,
   ApiUpdateToolDocs,
   ApiDeleteToolDocs,
+  ApiAddToolPlanDocs,
+  ApiUpdateToolPlanDocs,
+  ApiDeleteToolPlanDocs,
 } from './tool.swagger';
 import { Payload } from '../decorators/payload.decorator';
 import { FormDataRequest } from 'nestjs-form-data';
@@ -193,6 +200,49 @@ export class ToolsController {
     @Body() { screenshots }: RemoveToolScreenshotsDto,
   ) {
     return await this.toolsService.removeToolScreenshots(toolId, screenshots);
+  }
+
+  @Roles(['admin'])
+  @Post(':id/plans')
+  @UsePipes(new ZodValidationPipe(addToolPlanSchema))
+  @HttpCode(HttpStatus.OK)
+  @ResponseMessage('Tool plan added successfully')
+  @ApiAddToolPlanDocs()
+  async addToolPlan(
+    @Param('id', MongooseIdPipe) toolId: Types.ObjectId,
+    @Body() addToolPlanDto: AddToolPlanDto,
+  ) {
+    return await this.toolsService.addToolPlan(toolId, addToolPlanDto);
+  }
+
+  @Roles(['admin'])
+  @Patch(':id/plans/:planId')
+  @UsePipes(new ZodValidationPipe(updateToolPlanSchema))
+  @HttpCode(HttpStatus.OK)
+  @ResponseMessage('Tool plan updated successfully')
+  @ApiUpdateToolPlanDocs()
+  async updateToolPlan(
+    @Param('id', MongooseIdPipe) toolId: Types.ObjectId,
+    @Param('planId', MongooseIdPipe) planId: Types.ObjectId,
+    @Body() updateToolPlanDto: UpdateToolPlanDto,
+  ) {
+    return await this.toolsService.updateToolPlan(
+      toolId,
+      planId,
+      updateToolPlanDto,
+    );
+  }
+
+  @Roles(['admin'])
+  @Delete(':id/plans/:planId')
+  @HttpCode(HttpStatus.OK)
+  @ResponseMessage('Tool plan removed successfully')
+  @ApiDeleteToolPlanDocs()
+  async deleteToolPlan(
+    @Param('id', MongooseIdPipe) toolId: Types.ObjectId,
+    @Param('planId', MongooseIdPipe) planId: Types.ObjectId,
+  ) {
+    return await this.toolsService.deleteToolPlan(toolId, planId);
   }
 
   @Roles(['admin'])
