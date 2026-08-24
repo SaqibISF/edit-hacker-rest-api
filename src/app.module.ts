@@ -1,4 +1,9 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import {
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  RequestMethod,
+} from '@nestjs/common';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { EnvModule } from './env/env.module';
@@ -14,6 +19,7 @@ import { AuthMiddleware } from './auth/auth.middleware';
 import { FormDataConfigModule } from './form-data-config/form-data-config.module';
 import { ToolsModule } from './tools/tools.module';
 import { CategoriesModule } from './categories/categories.module';
+import { NewslettersModule } from './newsletters/newsletters.module';
 
 @Module({
   imports: [
@@ -41,6 +47,7 @@ import { CategoriesModule } from './categories/categories.module';
     UsersModule,
     ToolsModule,
     CategoriesModule,
+    NewslettersModule,
   ],
   providers: [
     { provide: APP_INTERCEPTOR, useClass: TransformInterceptor },
@@ -63,6 +70,9 @@ export class AppModule implements NestModule {
         'auth/reset-password',
         'auth/request-account-recovery',
         'auth/recover-user-account',
+        { path: 'newsletters/subscribe', method: RequestMethod.POST },
+        { path: 'newsletters/confirm/:token', method: RequestMethod.GET },
+        { path: 'newsletters/unsubscribe/:token', method: RequestMethod.GET },
         // '/favicon.ico',
       )
       .forRoutes('*');
