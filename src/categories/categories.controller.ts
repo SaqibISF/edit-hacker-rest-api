@@ -73,7 +73,7 @@ export class CategoriesController {
   }
 
   @Roles(['admin'])
-  @Get(':slug/available')
+  @Get(':slug/availability')
   @HttpCode(HttpStatus.OK)
   @ApiCheckSlugAvailabilityDocs()
   async checkSlugAvailability(@Param('slug', SlugPipe) slug: string) {

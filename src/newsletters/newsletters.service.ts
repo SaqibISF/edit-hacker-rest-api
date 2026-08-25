@@ -21,8 +21,8 @@ import {
   UpdatePreferencesDto,
 } from './newsletter.validation.schema';
 import { ResendService } from 'nestjs-resend';
-import { EnvService } from 'src/env/env.service';
-import NewsletterConfirmEmail from 'src/emails/NewsletterConfirmEmail';
+import { EnvService } from '../env/env.service';
+import NewsletterConfirmEmail from '../emails/NewsletterConfirmEmail';
 
 @Injectable()
 export class NewslettersService {

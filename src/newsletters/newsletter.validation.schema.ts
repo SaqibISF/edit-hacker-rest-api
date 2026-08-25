@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import { baseQuerySchema } from '../zod-schemas/base-query.schema';
 import { newsletterStatuses, newsletterSources } from './newsletter.schema';
-import { emailSchema } from 'src/zod-schemas/email.schema';
-import { nameSchema } from 'src/zod-schemas/name.schema';
+import { emailSchema } from '../zod-schemas/email.schema';
+import { nameSchema } from '../zod-schemas/name.schema';
 
 export const newslettersQuerySchema = baseQuerySchema.extend({
   status: z.literal(newsletterStatuses).optional(),

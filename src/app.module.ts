@@ -20,6 +20,7 @@ import { FormDataConfigModule } from './form-data-config/form-data-config.module
 import { ToolsModule } from './tools/tools.module';
 import { CategoriesModule } from './categories/categories.module';
 import { NewslettersModule } from './newsletters/newsletters.module';
+import { ComparisonsModule } from './comparisons/comparisons.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { NewslettersModule } from './newsletters/newsletters.module';
     ToolsModule,
     CategoriesModule,
     NewslettersModule,
+    ComparisonsModule,
   ],
   providers: [
     { provide: APP_INTERCEPTOR, useClass: TransformInterceptor },
@@ -73,6 +75,8 @@ export class AppModule implements NestModule {
         { path: 'newsletters/subscribe', method: RequestMethod.POST },
         { path: 'newsletters/confirm/:token', method: RequestMethod.GET },
         { path: 'newsletters/unsubscribe/:token', method: RequestMethod.GET },
+        { path: 'comparisons', method: RequestMethod.GET },
+        { path: 'comparisons/:identifier', method: RequestMethod.GET },
         // '/favicon.ico',
       )
       .forRoutes('*');
