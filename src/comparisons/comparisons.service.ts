@@ -125,8 +125,6 @@ export class ComparisonsService {
   }
 
   async getComparisons({
-    userId,
-    role,
     page,
     limit,
     search,
@@ -137,6 +135,8 @@ export class ComparisonsService {
     type,
     winner,
     scope,
+    userId,
+    role,
   }: ComparisonsQueryDto & { userId?: Types.ObjectId; role?: UserRole }) {
     const aggregate: PrePaginatePipelineStage[] = [];
     const match: _QueryFilterLooseId<ComparisonDocument> = {};
@@ -182,33 +182,17 @@ export class ComparisonsService {
     return { comparisons, meta };
   }
 
-  async getComparisonRecord(identifier: string | Types.ObjectId) {
-    const aggregate: PipelineStage[] = [];
-    const match: _QueryFilterLooseId<ComparisonDocument> =
-      typeof identifier === 'string'
-        ? { slug: identifier }
-        : { _id: identifier };
-
-    aggregate.push({ $match: match });
-    aggregate.push(...this.comparisonPipelines());
-
-    const comparisons = await this.comparisonModel
-      .aggregate<ComparisonDocument>(aggregate)
-      .exec();
-
-    if (!comparisons || !comparisons.length) {
-      throw new NotFoundException('Comparison not found');
-    }
-
-    return { comparison: comparisons[0] };
-  }
-
-  async getComparison(
-    identifier: string | Types.ObjectId,
-    scope: Scope,
-    userId?: Types.ObjectId,
-    role?: UserRole,
-  ) {
+  async getComparison({
+    identifier,
+    scope,
+    userId,
+    role,
+  }: {
+    identifier: string | Types.ObjectId;
+    scope: Scope;
+    userId?: Types.ObjectId;
+    role?: UserRole;
+  }) {
     const aggregate: PipelineStage[] = [];
     const match: _QueryFilterLooseId<ComparisonDocument> =
       typeof identifier === 'string'
@@ -252,15 +236,15 @@ export class ComparisonsService {
     };
   }
 
-  async createComparison(
-    userId: Types.ObjectId,
-    role: UserRole,
-    createComparisonDto: CreateComparisonDto,
-  ) {
-    if (role !== 'admin') {
-      createComparisonDto.type = 'user';
-      createComparisonDto.isPublished = false;
-    }
+  async createComparison({
+    userId,
+    role,
+    createComparisonDto,
+  }: {
+    userId: Types.ObjectId;
+    role: UserRole;
+    createComparisonDto: CreateComparisonDto;
+  }) {
     const exists = await this.comparisonModel
       .exists({ slug: createComparisonDto.slug })
       .lean()
@@ -274,20 +258,42 @@ export class ComparisonsService {
 
     const { slug } = await this.comparisonModel.create({
       ...createComparisonDto,
+      type: role === 'admin' ? 'editorial' : 'user',
       createdBy: userId,
     });
 
-    const comparison = await this.getComparisonRecord(slug);
+    const comparison = await this.getComparison({
+      identifier: slug,
+      scope: 'mine',
+      userId,
+      role,
+    });
 
     return { comparison };
   }
 
-  async updateComparison(id: Types.ObjectId, updateDto: UpdateComparisonDto) {
+  async updateComparison({
+    comparisonId,
+    updateComparisonDto,
+    userId,
+    role,
+  }: {
+    comparisonId: Types.ObjectId;
+    updateComparisonDto: UpdateComparisonDto;
+    userId: Types.ObjectId;
+    role: UserRole;
+  }) {
+    if (role !== 'admin') delete updateComparisonDto.isPublished;
+
     const updateComparison = await this.comparisonModel
-      .findByIdAndUpdate(id, updateDto, {
-        returnDocument: 'after',
-        runValidators: true,
-      })
+      .findOneAndUpdate(
+        { _id: comparisonId, ...(role !== 'admin' && { createdBy: userId }) },
+        updateComparisonDto,
+        {
+          returnDocument: 'after',
+          runValidators: true,
+        },
+      )
       .lean()
       .exec();
 
@@ -295,14 +301,30 @@ export class ComparisonsService {
       throw new NotFoundException('Comparison not found');
     }
 
-    const comparison = await this.getComparisonRecord(updateComparison.slug);
+    const comparison = await this.getComparison({
+      identifier: updateComparison.slug,
+      scope: 'mine',
+      userId,
+      role,
+    });
 
     return { comparison };
   }
 
-  async deleteComparison(comparisonId: Types.ObjectId) {
+  async deleteComparison({
+    comparisonId,
+    userId,
+    role,
+  }: {
+    comparisonId: Types.ObjectId;
+    userId: Types.ObjectId;
+    role: UserRole;
+  }) {
     const comparison = await this.comparisonModel
-      .findByIdAndDelete(comparisonId)
+      .findOneAndDelete({
+        _id: comparisonId,
+        ...(role !== 'admin' && { createdBy: userId }),
+      })
       .lean()
       .exec();
 

@@ -47,6 +47,7 @@ import {
   ApiRemoveCategoryCoverImageDocs,
   ApiDeleteCategoryDocs,
 } from './category.swagger';
+import { Payload, PayloadData } from 'src/decorators/payload.decorator';
 
 @ApiTags('Categories')
 @Controller('categories')
@@ -58,8 +59,14 @@ export class CategoriesController {
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Categories successfully retrieved')
   @ApiGetCategoriesDocs()
-  async getCategories(@Query() query: CategoriesQueryDto) {
-    return await this.categoriesService.getCategories(query);
+  async getCategories(
+    @Payload() payload: PayloadData | undefined,
+    @Query() query: CategoriesQueryDto,
+  ) {
+    return await this.categoriesService.getCategories({
+      ...query,
+      role: payload?.role,
+    });
   }
 
   @Get(':identifier')
@@ -67,9 +74,10 @@ export class CategoriesController {
   @ResponseMessage('Category successfully retrieved')
   @ApiGetCategoryDocs()
   async getCategory(
+    @Payload() payload: PayloadData | undefined,
     @Param('identifier', IdentifierPipe) identifier: string | Types.ObjectId,
   ) {
-    return await this.categoriesService.getCategory(identifier);
+    return await this.categoriesService.getCategory(identifier, payload?.role);
   }
 
   @Roles(['admin'])

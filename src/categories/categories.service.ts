@@ -9,6 +9,7 @@ import {
   _QueryFilterLooseId,
   PaginateOptions,
   PrePaginatePipelineStage,
+  QueryFilter,
   Types,
   type AggregatePaginateModel,
 } from 'mongoose';
@@ -18,6 +19,7 @@ import type {
   UpdateCategoryDto,
 } from './category.validation.schema';
 import { removeFileFromStorage } from '../lib/remove-file';
+import { UserRole } from 'src/users/user.schema';
 
 @Injectable()
 export class CategoriesService {
@@ -34,13 +36,16 @@ export class CategoriesService {
     sortOrder = 'ASC',
     isActive,
     isFeatured,
-  }: CategoriesQueryDto) {
+    role,
+  }: CategoriesQueryDto & { userId?: Types.ObjectId; role?: UserRole }) {
     const aggregate: PrePaginatePipelineStage[] = [];
     const match: _QueryFilterLooseId<CategoryDocument> = {};
 
+    if (role === 'admin' && isActive) match.isActive = isActive;
+    else match.isActive = true;
+
     if (search) match.$text = { $search: search };
-    if (isActive !== undefined) match.isActive = isActive;
-    if (isFeatured !== undefined) match.isFeatured = isFeatured;
+    if (isFeatured) match.isFeatured = isFeatured;
 
     if (Object.keys(match).length > 0) aggregate.push({ $match: match });
 
@@ -64,15 +69,15 @@ export class CategoriesService {
     return { categories, meta };
   }
 
-  async getCategory(identifier: string | Types.ObjectId) {
-    const category = await this.categoryModel
-      .findOne(
-        typeof identifier === 'string'
-          ? { slug: identifier }
-          : { _id: identifier },
-      )
-      .lean()
-      .exec();
+  async getCategory(identifier: string | Types.ObjectId, role?: UserRole) {
+    const query: QueryFilter<CategoryDocument> =
+      typeof identifier === 'string'
+        ? { slug: identifier }
+        : { _id: identifier };
+
+    if (role !== 'admin') query.isActive = true;
+
+    const category = await this.categoryModel.findOne(query).lean().exec();
 
     if (!category) {
       throw new NotFoundException('Category is not found');

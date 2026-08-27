@@ -317,6 +317,7 @@ export function ApiCreateToolDocs() {
             apiDocs: 'https://docs.supertool.com',
           },
           affiliateUrl: 'https://supertool.com/ref?id=123',
+          rating: { average: 4.5, count: 10 },
           metaTitle: 'SuperTool - The ultimate AI assistant',
           metaDescription: 'SuperTool helps you work faster using AI.',
           launchDate: '2023-10-01T12:00:00.000Z',
@@ -589,6 +590,7 @@ export function ApiUpdateToolDocs() {
             apiDocs: 'https://docs.supertool.com',
           },
           affiliateUrl: 'https://supertool.com/ref?id=123',
+          rating: { average: 4.8, count: 125 },
           metaTitle: 'SuperTool - The ultimate AI assistant',
           metaDescription: 'SuperTool helps you work faster using AI.',
           launchDate: '2023-10-01T12:00:00.000Z',
@@ -765,6 +767,87 @@ export function ApiDeleteToolPlanDocs() {
     ApiUnauthorizedErrorResponse(),
     ApiForbiddenErrorResponse(),
     ApiValidationErrorResponse(),
+    ApiNotFoundErrorResponse(),
+  );
+}
+
+export function ApiIncrementViewCountDocs() {
+  return applyDecorators(
+    ApiOperation({ summary: 'Increment the view count of a tool' }),
+    ApiParam({
+      name: 'identifier',
+      type: String,
+      description: 'Slug or MongoDB ID of the tool',
+      example: 'tool-name',
+    }),
+    ApiResponse({
+      status: HttpStatus.OK,
+      description: 'View count incremented successfully',
+      schema: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean', example: true },
+          message: {
+            type: 'string',
+            example: 'View count incremented successfully',
+          },
+        },
+      },
+    }),
+    ApiNotFoundErrorResponse(),
+  );
+}
+
+export function ApiIncrementClickCountDocs() {
+  return applyDecorators(
+    ApiOperation({ summary: 'Increment the click count of a tool' }),
+    ApiParam({
+      name: 'identifier',
+      type: String,
+      description: 'Slug or MongoDB ID of the tool',
+      example: 'tool-name',
+    }),
+    ApiResponse({
+      status: HttpStatus.OK,
+      description: 'Click count incremented successfully',
+      schema: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean', example: true },
+          message: {
+            type: 'string',
+            example: 'Click count incremented successfully',
+          },
+        },
+      },
+    }),
+    ApiNotFoundErrorResponse(),
+  );
+}
+
+export function ApiIncrementSaveCountDocs() {
+  return applyDecorators(
+    ApiOperation({ summary: 'Increment the save count of a tool' }),
+    ApiParam({
+      name: 'identifier',
+      type: String,
+      description: 'Slug or MongoDB ID of the tool',
+      example: 'tool-name',
+    }),
+    ApiResponse({
+      status: HttpStatus.OK,
+      description: 'Save count incremented successfully',
+      schema: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean', example: true },
+          message: {
+            type: 'string',
+            example: 'Save count incremented successfully',
+          },
+        },
+      },
+    }),
     ApiNotFoundErrorResponse(),
   );
 }

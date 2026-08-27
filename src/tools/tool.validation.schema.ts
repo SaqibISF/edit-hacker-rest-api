@@ -10,10 +10,13 @@ import {
 import { objectIdSchema } from '../zod-schemas/objectId.schema';
 import { zfd } from 'zod-form-data';
 import { imageFileSchema } from '../zod-schemas/file.schema';
+import { scopeSchema } from 'src/zod-schemas/scope.schema';
 
 export const toolsQuerySchema = baseQuerySchema.extend({
   status: z.literal(toolStatuses).optional(),
   pricingModel: z.literal(toolPricingModels).optional(),
+  scope: scopeSchema,
+  isActive: z.stringbool().optional(),
   sortBy: z
     .literal(['name', 'createdAt', 'updatedAt', 'viewCount', 'saveCount'])
     .default('createdAt'),
@@ -46,6 +49,12 @@ export const createToolSchema = z
       })
       .optional(),
     affiliateUrl: z.url().trim().optional(),
+    rating: z
+      .object({
+        average: z.number().min(0).max(5).optional(),
+        count: z.number().min(0).optional(),
+      })
+      .optional(),
     metaTitle: z.string().trim().optional(),
     metaDescription: z.string().trim().optional(),
     launchDate: z.iso.datetime().optional(),

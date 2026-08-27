@@ -24,13 +24,14 @@ export const createComparisonSchema = z
       .array(objectIdSchema)
       .min(2, 'A comparison must have at least 2 tools')
       .max(5, 'A comparison can have at most 5 tools'),
-    type: z.literal(comparisonTypes).optional(),
-    isPublished: z.boolean().optional(),
     winner: objectIdSchema.optional().nullable(),
     summary: z.string().trim().max(500).optional(),
   })
   .strict();
 export type CreateComparisonDto = z.infer<typeof createComparisonSchema>;
 
-export const updateComparisonSchema = createComparisonSchema.partial().strict();
+export const updateComparisonSchema = createComparisonSchema
+  .partial()
+  .extend({ isPublished: z.boolean().optional() })
+  .strict();
 export type UpdateComparisonDto = z.infer<typeof updateComparisonSchema>;

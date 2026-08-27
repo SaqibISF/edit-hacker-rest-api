@@ -17,7 +17,6 @@ import { ResponseMessage } from '../decorators/response-message.decorator';
 import { Types } from 'mongoose';
 import { MongooseIdPipe } from '../pipes/mongoose-id/mongoose-id.pipe';
 import { ZodValidationPipe } from '../pipes/zod-validation/zod-validation.pipe';
-import { Roles } from '../decorators/roles.decorator';
 import { Payload, type PayloadData } from '../decorators/payload.decorator';
 import {
   ApiGetComparisonsDocs,
@@ -69,12 +68,12 @@ export class ComparisonsController {
     @Query('scope', new ZodValidationPipe(scopeSchema)) scope: Scope,
     @Param('identifier', IdentifierPipe) identifier: string | Types.ObjectId,
   ) {
-    return await this.comparisonsService.getComparison(
+    return await this.comparisonsService.getComparison({
       identifier,
       scope,
-      payload?._id,
-      payload?.role,
-    );
+      userId: payload?._id,
+      role: payload?.role,
+    });
   }
 
   @Get(':slug/availability')
@@ -90,40 +89,46 @@ export class ComparisonsController {
   @ResponseMessage('Comparison created successfully')
   @ApiCreateComparisonDocs()
   async createComparison(
-    @Payload() payload: PayloadData,
+    @Payload() { _id: userId, role }: PayloadData,
     @Body() createComparisonDto: CreateComparisonDto,
   ) {
-    return await this.comparisonsService.createComparison(
-      payload._id,
-      payload.role,
+    return await this.comparisonsService.createComparison({
+      userId,
+      role,
       createComparisonDto,
-    );
+    });
   }
 
-  @Roles(['admin'])
   @Patch(':id')
   @UsePipes(new ZodValidationPipe(updateComparisonSchema))
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Comparison updated successfully')
   @ApiUpdateComparisonDocs()
   async updateComparison(
+    @Payload() { _id: userId, role }: PayloadData,
     @Param('id', MongooseIdPipe) comparisonId: Types.ObjectId,
     @Body() updateComparisonDto: UpdateComparisonDto,
   ) {
-    return await this.comparisonsService.updateComparison(
+    return await this.comparisonsService.updateComparison({
       comparisonId,
       updateComparisonDto,
-    );
+      userId,
+      role,
+    });
   }
 
-  @Roles(['admin'])
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Comparison deleted successfully')
   @ApiDeleteComparisonDocs()
   async deleteComparison(
+    @Payload() { _id: userId, role }: PayloadData,
     @Param('id', MongooseIdPipe) comparisonId: Types.ObjectId,
   ) {
-    return await this.comparisonsService.deleteComparison(comparisonId);
+    return await this.comparisonsService.deleteComparison({
+      comparisonId,
+      userId,
+      role,
+    });
   }
 }

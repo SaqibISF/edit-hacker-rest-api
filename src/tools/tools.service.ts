@@ -1,7 +1,8 @@
 import {
-  BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Tool, ToolDocument } from './tool.schema';
@@ -26,6 +27,9 @@ import {
 } from '../lib/remove-file';
 import { Category, CategoryDocument } from '../categories/category.schema';
 import { Connection } from 'mongoose';
+import { UserRole } from '../users/user.schema';
+import { Scope } from '../zod-schemas/scope.schema';
+import { QueryFilter } from 'mongoose';
 
 @Injectable()
 export class ToolsService {
@@ -47,12 +51,32 @@ export class ToolsService {
     sortOrder = 'DESC',
     status,
     pricingModel,
-  }: ToolsQueryDto) {
+    scope,
+    isActive,
+    userId,
+    role,
+  }: ToolsQueryDto & { userId?: Types.ObjectId; role?: UserRole }) {
     const aggregate: PrePaginatePipelineStage[] = [];
     const match: _QueryFilterLooseId<ToolDocument> = {};
 
+    if (scope === 'mine') {
+      if (!userId) {
+        throw new UnauthorizedException(
+          'You must be logged in to view your tools',
+        );
+      }
+      match.submittedBy = userId;
+    }
+
+    if (scope === 'public' && role !== 'admin') {
+      match.status = 'approved';
+      match.isActive = true;
+    } else {
+      if (status) match.status = status;
+      if (isActive) match.isActive = isActive;
+    }
+
     if (search) match.$text = { $search: search };
-    if (status) match.status = status;
     if (pricingModel) match.pricingModel = pricingModel;
 
     if (Object.keys(match).length > 0) aggregate.push({ $match: match });
@@ -77,7 +101,34 @@ export class ToolsService {
     return { tools, meta };
   }
 
-  async getTool(identifier: string | Types.ObjectId) {
+  async getTool({
+    identifier,
+    scope,
+    userId,
+    role,
+  }: {
+    identifier: string | Types.ObjectId;
+    scope: Scope;
+    userId?: Types.ObjectId;
+    role?: UserRole;
+  }) {
+    const query: QueryFilter<ToolDocument> =
+      typeof identifier === 'string'
+        ? { slug: identifier }
+        : { _id: identifier };
+
+    if (scope === 'mine') {
+      if (!userId) {
+        throw new UnauthorizedException(
+          'You must be logged in to view your tool',
+        );
+      }
+      query.submittedBy = userId;
+    } else if (role !== 'admin') {
+      query.status = 'approved';
+      query.isActive = true;
+    }
+
     const tool = await this.toolModel
       .findOne(
         typeof identifier === 'string'
@@ -111,7 +162,7 @@ export class ToolsService {
     });
 
     if (isSlugExist)
-      throw new BadRequestException(
+      throw new ConflictException(
         `Slug "${createToolDto.slug}" is already taken`,
       );
 
@@ -142,9 +193,68 @@ export class ToolsService {
     }
   }
 
-  async updateToolLogo(toolId: Types.ObjectId, logo: string) {
+  async incrementViewCount(identifier: string | Types.ObjectId) {
+    await this.toolModel
+      .findOneAndUpdate(
+        typeof identifier === 'string'
+          ? { slug: identifier }
+          : { _id: identifier },
+        { $inc: { viewCount: 1 } },
+      )
+      .lean()
+      .exec()
+      .catch((error) => console.error('Error updating view count:', error));
+
+    return {};
+  }
+
+  async incrementClickCount(identifier: string | Types.ObjectId) {
+    await this.toolModel
+      .findOneAndUpdate(
+        typeof identifier === 'string'
+          ? { slug: identifier }
+          : { _id: identifier },
+        { $inc: { clickCount: 1 } },
+      )
+      .lean()
+      .exec()
+      .catch((error) => console.error('Error updating click count:', error));
+
+    return {};
+  }
+
+  async incrementSaveCount(identifier: string | Types.ObjectId) {
+    await this.toolModel
+      .findOneAndUpdate(
+        typeof identifier === 'string'
+          ? { slug: identifier }
+          : { _id: identifier },
+        { $inc: { saveCount: 1 } },
+      )
+      .lean()
+      .exec()
+      .catch((error) => console.error('Error updating save count:', error));
+
+    return {};
+  }
+
+  async updateToolLogo({
+    toolId,
+    logo,
+    userId,
+    role,
+  }: {
+    toolId: Types.ObjectId;
+    logo: string;
+    userId: Types.ObjectId;
+    role: UserRole;
+  }) {
     const tool = await this.toolModel
-      .findByIdAndUpdate(toolId, { logo }, { returnDocument: 'before' })
+      .findOneAndUpdate(
+        { _id: toolId, ...(role !== 'admin' && { submittedBy: userId }) },
+        { logo },
+        { returnDocument: 'before' },
+      )
       .lean()
       .exec();
 
@@ -160,10 +270,18 @@ export class ToolsService {
     return { tool };
   }
 
-  async removeToolLogo(toolId: Types.ObjectId) {
+  async removeToolLogo({
+    toolId,
+    userId,
+    role,
+  }: {
+    toolId: Types.ObjectId;
+    userId: Types.ObjectId;
+    role: UserRole;
+  }) {
     const tool = await this.toolModel
-      .findByIdAndUpdate(
-        toolId,
+      .findOneAndUpdate(
+        { _id: toolId, ...(role !== 'admin' && { submittedBy: userId }) },
         { $unset: { logo: 1 } },
         { returnDocument: 'before' },
       )
@@ -180,9 +298,23 @@ export class ToolsService {
     return {};
   }
 
-  async updateToolCoverImage(toolId: Types.ObjectId, coverImage: string) {
+  async updateToolCoverImage({
+    toolId,
+    coverImage,
+    userId,
+    role,
+  }: {
+    toolId: Types.ObjectId;
+    coverImage: string;
+    userId: Types.ObjectId;
+    role: UserRole;
+  }) {
     const tool = await this.toolModel
-      .findByIdAndUpdate(toolId, { coverImage }, { returnDocument: 'before' })
+      .findOneAndUpdate(
+        { _id: toolId, ...(role !== 'admin' && { submittedBy: userId }) },
+        { coverImage },
+        { returnDocument: 'before' },
+      )
       .lean()
       .exec();
 
@@ -198,10 +330,18 @@ export class ToolsService {
     return { tool };
   }
 
-  async removeToolCoverImage(toolId: Types.ObjectId) {
+  async removeToolCoverImage({
+    toolId,
+    userId,
+    role,
+  }: {
+    toolId: Types.ObjectId;
+    userId: Types.ObjectId;
+    role: UserRole;
+  }) {
     const tool = await this.toolModel
-      .findByIdAndUpdate(
-        toolId,
+      .findOneAndUpdate(
+        { _id: toolId, ...(role !== 'admin' && { submittedBy: userId }) },
         { $unset: { coverImage: 1 } },
         { returnDocument: 'before' },
       )
@@ -218,10 +358,20 @@ export class ToolsService {
     return {};
   }
 
-  async addToolScreenshots(toolId: Types.ObjectId, screenshots: string[]) {
+  async addToolScreenshots({
+    toolId,
+    screenshots,
+    userId,
+    role,
+  }: {
+    toolId: Types.ObjectId;
+    screenshots: string[];
+    userId: Types.ObjectId;
+    role: UserRole;
+  }) {
     const tool = await this.toolModel
-      .findByIdAndUpdate(
-        toolId,
+      .findOneAndUpdate(
+        { _id: toolId, ...(role !== 'admin' && { submittedBy: userId }) },
         { $push: { screenshots: { $each: screenshots } } },
         { returnDocument: 'after' },
       )
@@ -235,10 +385,20 @@ export class ToolsService {
     return { tool };
   }
 
-  async removeToolScreenshots(toolId: Types.ObjectId, screenshots: string[]) {
+  async removeToolScreenshots({
+    toolId,
+    screenshots,
+    userId,
+    role,
+  }: {
+    toolId: Types.ObjectId;
+    screenshots: string[];
+    userId: Types.ObjectId;
+    role: UserRole;
+  }) {
     const tool = await this.toolModel
-      .findByIdAndUpdate(
-        toolId,
+      .findOneAndUpdate(
+        { _id: toolId, ...(role !== 'admin' && { submittedBy: userId }) },
         { $pull: { screenshots: { $in: screenshots } } },
         { returnDocument: 'after' },
       )
@@ -254,10 +414,20 @@ export class ToolsService {
     return {};
   }
 
-  async addToolPlan(toolId: Types.ObjectId, addToolPlanDto: AddToolPlanDto) {
+  async addToolPlan({
+    toolId,
+    addToolPlanDto,
+    userId,
+    role,
+  }: {
+    toolId: Types.ObjectId;
+    addToolPlanDto: AddToolPlanDto;
+    userId: Types.ObjectId;
+    role: UserRole;
+  }) {
     const tool = await this.toolModel
-      .findByIdAndUpdate(
-        toolId,
+      .findOneAndUpdate(
+        { _id: toolId, ...(role !== 'admin' && { submittedBy: userId }) },
         { $push: { plans: addToolPlanDto } },
         {
           projection: { plans: { $slice: -1 } },
@@ -274,11 +444,19 @@ export class ToolsService {
     return { plan };
   }
 
-  async updateToolPlan(
-    toolId: Types.ObjectId,
-    planId: Types.ObjectId,
-    updateToolPlanDto: UpdateToolPlanDto,
-  ) {
+  async updateToolPlan({
+    toolId,
+    planId,
+    updateToolPlanDto,
+    userId,
+    role,
+  }: {
+    toolId: Types.ObjectId;
+    planId: Types.ObjectId;
+    updateToolPlanDto: UpdateToolPlanDto;
+    userId: Types.ObjectId;
+    role: UserRole;
+  }) {
     const payload = Object.keys(updateToolPlanDto).reduce(
       (acc, key) => {
         acc[`plans.$.${key}`] = updateToolPlanDto[key];
@@ -289,7 +467,11 @@ export class ToolsService {
 
     const tool = await this.toolModel
       .findOneAndUpdate(
-        { _id: toolId, 'plans._id': planId },
+        {
+          _id: toolId,
+          'plans._id': planId,
+          ...(role !== 'admin' && { submittedBy: userId }),
+        },
         { $set: payload },
         {
           returnDocument: 'after',
@@ -308,10 +490,20 @@ export class ToolsService {
     return { plan };
   }
 
-  async deleteToolPlan(toolId: Types.ObjectId, planId: Types.ObjectId) {
+  async deleteToolPlan({
+    toolId,
+    planId,
+    userId,
+    role,
+  }: {
+    toolId: Types.ObjectId;
+    planId: Types.ObjectId;
+    userId: Types.ObjectId;
+    role: UserRole;
+  }) {
     const tool = await this.toolModel
-      .findByIdAndUpdate(
-        toolId,
+      .findOneAndUpdate(
+        { _id: toolId, ...(role !== 'admin' && { submittedBy: userId }) },
         { $pull: { plans: { _id: planId } } },
         { returnDocument: 'after' },
       )
@@ -325,9 +517,36 @@ export class ToolsService {
     return {};
   }
 
-  async updateTool(toolId: Types.ObjectId, updateToolDto: UpdateToolDto) {
+  async updateTool({
+    toolId,
+    updateToolDto,
+    userId,
+    role,
+  }: {
+    toolId: Types.ObjectId;
+    updateToolDto: UpdateToolDto;
+    userId: Types.ObjectId;
+    role: UserRole;
+  }) {
+    if (role !== 'admin') {
+      if (updateToolDto.status !== 'draft') delete updateToolDto.status;
+      delete updateToolDto.isActive;
+    }
+
     const tool = await this.toolModel
-      .findByIdAndUpdate(toolId, updateToolDto, { returnDocument: 'after' })
+      .findOneAndUpdate(
+        { _id: toolId, ...(role !== 'admin' && { submittedBy: userId }) },
+        {
+          ...updateToolDto,
+          ...(role === 'admin' &&
+            (updateToolDto.status === 'approved' ||
+              updateToolDto.status === 'rejected') && {
+              reviewedBy: userId,
+              reviewedAt: new Date(),
+            }),
+        },
+        { returnDocument: 'after' },
+      )
       .lean()
       .exec();
 
@@ -338,14 +557,25 @@ export class ToolsService {
     return { tool };
   }
 
-  async deleteTool(toolId: Types.ObjectId) {
+  async deleteTool({
+    toolId,
+    userId,
+    role,
+  }: {
+    toolId: Types.ObjectId;
+    userId: Types.ObjectId;
+    role: UserRole;
+  }) {
     const session = await this.connection.startSession();
 
     try {
       session.startTransaction();
 
       const tool = await this.toolModel
-        .findByIdAndDelete(toolId, { returnDocument: 'before', session })
+        .findOneAndDelete(
+          { _id: toolId, ...(role !== 'admin' && { submittedBy: userId }) },
+          { returnDocument: 'before', session },
+        )
         .select('_id')
         .lean()
         .exec();

@@ -40,7 +40,6 @@ import {
   type UpdateToolPlanDto,
 } from './tool.validation.schema';
 import { SlugPipe } from '../pipes/slug/slug.pipe';
-import { Roles } from '../decorators/roles.decorator';
 import {
   ApiGetToolsDocs,
   ApiGetToolDocs,
@@ -57,10 +56,14 @@ import {
   ApiAddToolPlanDocs,
   ApiUpdateToolPlanDocs,
   ApiDeleteToolPlanDocs,
+  ApiIncrementViewCountDocs,
+  ApiIncrementClickCountDocs,
+  ApiIncrementSaveCountDocs,
 } from './tool.swagger';
-import { Payload } from '../decorators/payload.decorator';
+import { Payload, type PayloadData } from '../decorators/payload.decorator';
 import { FormDataRequest } from 'nestjs-form-data';
 import { type Request } from 'express';
+import { scopeSchema, type Scope } from '../zod-schemas/scope.schema';
 
 @ApiTags('Tools')
 @Controller('tools')
@@ -72,8 +75,15 @@ export class ToolsController {
   @HttpCode(HttpStatus.OK)
   @ApiGetToolsDocs()
   @ResponseMessage('Tools successfully retrieved')
-  async getTools(@Query() query: ToolsQueryDto) {
-    return await this.toolsService.getTools(query);
+  async getTools(
+    @Payload() payload: PayloadData | undefined,
+    @Query() query: ToolsQueryDto,
+  ) {
+    return await this.toolsService.getTools({
+      ...query,
+      userId: payload?._id,
+      role: payload?.role,
+    });
   }
 
   @Get(':identifier')
@@ -81,12 +91,18 @@ export class ToolsController {
   @ResponseMessage('Tool successfully retrieved')
   @ApiGetToolDocs()
   async getTool(
+    @Payload() payload: PayloadData | undefined,
+    @Query('scope', new ZodValidationPipe(scopeSchema)) scope: Scope,
     @Param('identifier', IdentifierPipe) identifier: string | Types.ObjectId,
   ) {
-    return await this.toolsService.getTool(identifier);
+    return await this.toolsService.getTool({
+      identifier,
+      scope,
+      userId: payload?._id,
+      role: payload?.role,
+    });
   }
 
-  @Roles(['admin'])
   @Get(':slug/availability')
   @HttpCode(HttpStatus.OK)
   @ApiCheckSlugAvailabilityDocs()
@@ -94,7 +110,6 @@ export class ToolsController {
     return await this.toolsService.checkSlugAvailability(slug);
   }
 
-  @Roles(['admin'])
   @Post()
   @UsePipes(new ZodValidationPipe(createToolSchema))
   @HttpCode(HttpStatus.CREATED)
@@ -107,7 +122,36 @@ export class ToolsController {
     return await this.toolsService.createTool(userId, createToolDto);
   }
 
-  @Roles(['admin'])
+  @Get(':identifier/increment-view-count')
+  @HttpCode(HttpStatus.OK)
+  @ResponseMessage('View count incremented successfully')
+  @ApiIncrementViewCountDocs()
+  async incrementViewCount(
+    @Param('identifier', IdentifierPipe) identifier: string | Types.ObjectId,
+  ) {
+    return await this.toolsService.incrementViewCount(identifier);
+  }
+
+  @Get(':identifier/increment-click-count')
+  @HttpCode(HttpStatus.OK)
+  @ResponseMessage('Click count incremented successfully')
+  @ApiIncrementClickCountDocs()
+  async incrementClickCount(
+    @Param('identifier', IdentifierPipe) identifier: string | Types.ObjectId,
+  ) {
+    return await this.toolsService.incrementClickCount(identifier);
+  }
+
+  @Get(':identifier/increment-save-count')
+  @HttpCode(HttpStatus.OK)
+  @ResponseMessage('Save count incremented successfully')
+  @ApiIncrementSaveCountDocs()
+  async incrementSaveCount(
+    @Param('identifier', IdentifierPipe) identifier: string | Types.ObjectId,
+  ) {
+    return await this.toolsService.incrementSaveCount(identifier);
+  }
+
   @Patch(':id/logo')
   @FormDataRequest()
   @UsePipes(new ZodValidationPipe(updateToolLogoSchema))
@@ -116,6 +160,7 @@ export class ToolsController {
   @ApiUpdateToolLogoDocs()
   async updateToolLogo(
     @Req() req: Request,
+    @Payload() { _id: userId, role }: PayloadData,
     @Param('id', MongooseIdPipe) toolId: Types.ObjectId,
     @Body() { logo }: UpdateToolLogoDto,
   ) {
@@ -124,19 +169,25 @@ export class ToolsController {
 
     const logoUrl = `${protocol}://${host}/${logo.filename}`;
 
-    return await this.toolsService.updateToolLogo(toolId, logoUrl);
+    return await this.toolsService.updateToolLogo({
+      toolId,
+      logo: logoUrl,
+      userId,
+      role,
+    });
   }
 
-  @Roles(['admin'])
   @Delete(':id/logo')
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Logo removed successfully')
   @ApiRemoveToolLogoDocs()
-  async removeToolLogo(@Param('id', MongooseIdPipe) toolId: Types.ObjectId) {
-    return await this.toolsService.removeToolLogo(toolId);
+  async removeToolLogo(
+    @Payload() { _id: userId, role }: PayloadData,
+    @Param('id', MongooseIdPipe) toolId: Types.ObjectId,
+  ) {
+    return await this.toolsService.removeToolLogo({ toolId, userId, role });
   }
 
-  @Roles(['admin'])
   @Patch(':id/cover-image')
   @FormDataRequest()
   @UsePipes(new ZodValidationPipe(updateToolCoverImageSchema))
@@ -145,6 +196,7 @@ export class ToolsController {
   @ApiUpdateToolCoverImageDocs()
   async updateToolCoverImage(
     @Req() req: Request,
+    @Payload() { _id: userId, role }: PayloadData,
     @Param('id', MongooseIdPipe) toolId: Types.ObjectId,
     @Body() { coverImage }: UpdateToolCoverImageDto,
   ) {
@@ -153,21 +205,29 @@ export class ToolsController {
 
     const coverImageUrl = `${protocol}://${host}/${coverImage.filename}`;
 
-    return await this.toolsService.updateToolCoverImage(toolId, coverImageUrl);
+    return await this.toolsService.updateToolCoverImage({
+      toolId,
+      coverImage: coverImageUrl,
+      userId,
+      role,
+    });
   }
 
-  @Roles(['admin'])
   @Delete(':id/cover-image')
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Cover image removed successfully')
   @ApiRemoveToolCoverImageDocs()
   async removeToolCoverImage(
+    @Payload() { _id: userId, role }: PayloadData,
     @Param('id', MongooseIdPipe) toolId: Types.ObjectId,
   ) {
-    return await this.toolsService.removeToolCoverImage(toolId);
+    return await this.toolsService.removeToolCoverImage({
+      toolId,
+      userId,
+      role,
+    });
   }
 
-  @Roles(['admin'])
   @Patch(':id/screenshots')
   @FormDataRequest()
   @UsePipes(new ZodValidationPipe(updateToolScreenshotsSchema))
@@ -176,6 +236,7 @@ export class ToolsController {
   @ApiUpdateToolScreenshotsDocs()
   async updateToolScreenshots(
     @Req() req: Request,
+    @Payload() { _id: userId, role }: PayloadData,
     @Param('id', MongooseIdPipe) toolId: Types.ObjectId,
     @Body() { screenshots }: UpdateToolScreenshotsDto,
   ) {
@@ -186,84 +247,113 @@ export class ToolsController {
       (screenshot) => `${protocol}://${host}/${screenshot.filename}`,
     );
 
-    return await this.toolsService.addToolScreenshots(toolId, screenshotsUrls);
+    return await this.toolsService.addToolScreenshots({
+      toolId,
+      screenshots: screenshotsUrls,
+      userId,
+      role,
+    });
   }
 
-  @Roles(['admin'])
   @Delete(':id/screenshots')
   @UsePipes(new ZodValidationPipe(removeToolScreenshotsSchema))
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Screenshots removed successfully')
   @ApiRemoveToolScreenshotsDocs()
   async removeToolScreenshots(
+    @Payload() { _id: userId, role }: PayloadData,
     @Param('id', MongooseIdPipe) toolId: Types.ObjectId,
     @Body() { screenshots }: RemoveToolScreenshotsDto,
   ) {
-    return await this.toolsService.removeToolScreenshots(toolId, screenshots);
+    return await this.toolsService.removeToolScreenshots({
+      toolId,
+      screenshots,
+      userId,
+      role,
+    });
   }
 
-  @Roles(['admin'])
   @Post(':id/plans')
   @UsePipes(new ZodValidationPipe(addToolPlanSchema))
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Tool plan added successfully')
   @ApiAddToolPlanDocs()
   async addToolPlan(
+    @Payload() { _id: userId, role }: PayloadData,
     @Param('id', MongooseIdPipe) toolId: Types.ObjectId,
     @Body() addToolPlanDto: AddToolPlanDto,
   ) {
-    return await this.toolsService.addToolPlan(toolId, addToolPlanDto);
+    return await this.toolsService.addToolPlan({
+      toolId,
+      addToolPlanDto,
+      userId,
+      role,
+    });
   }
 
-  @Roles(['admin'])
   @Patch(':id/plans/:planId')
   @UsePipes(new ZodValidationPipe(updateToolPlanSchema))
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Tool plan updated successfully')
   @ApiUpdateToolPlanDocs()
   async updateToolPlan(
+    @Payload() { _id: userId, role }: PayloadData,
     @Param('id', MongooseIdPipe) toolId: Types.ObjectId,
     @Param('planId', MongooseIdPipe) planId: Types.ObjectId,
     @Body() updateToolPlanDto: UpdateToolPlanDto,
   ) {
-    return await this.toolsService.updateToolPlan(
+    return await this.toolsService.updateToolPlan({
       toolId,
       planId,
       updateToolPlanDto,
-    );
+      userId,
+      role,
+    });
   }
 
-  @Roles(['admin'])
   @Delete(':id/plans/:planId')
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Tool plan removed successfully')
   @ApiDeleteToolPlanDocs()
   async deleteToolPlan(
+    @Payload() { _id: userId, role }: PayloadData,
     @Param('id', MongooseIdPipe) toolId: Types.ObjectId,
     @Param('planId', MongooseIdPipe) planId: Types.ObjectId,
   ) {
-    return await this.toolsService.deleteToolPlan(toolId, planId);
+    return await this.toolsService.deleteToolPlan({
+      toolId,
+      planId,
+      userId,
+      role,
+    });
   }
 
-  @Roles(['admin'])
   @Patch(':id')
   @UsePipes(new ZodValidationPipe(updateToolSchema))
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Tool updated successfully')
   @ApiUpdateToolDocs()
   async updateTool(
+    @Payload() { _id: userId, role }: PayloadData,
     @Param('id', MongooseIdPipe) toolId: Types.ObjectId,
     @Body() updateToolDto: UpdateToolDto,
   ) {
-    return await this.toolsService.updateTool(toolId, updateToolDto);
+    return await this.toolsService.updateTool({
+      toolId,
+      updateToolDto,
+      userId,
+      role,
+    });
   }
 
-  @Roles(['admin'])
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Tool deleted successfully')
   @ApiDeleteToolDocs()
-  async deleteTool(@Param('id', MongooseIdPipe) toolId: Types.ObjectId) {
-    return await this.toolsService.deleteTool(toolId);
+  async deleteTool(
+    @Payload() { _id: userId, role }: PayloadData,
+    @Param('id', MongooseIdPipe) toolId: Types.ObjectId,
+  ) {
+    return await this.toolsService.deleteTool({ toolId, userId, role });
   }
 }
