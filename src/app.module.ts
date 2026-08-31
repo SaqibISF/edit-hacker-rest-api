@@ -22,6 +22,7 @@ import { CategoriesModule } from './categories/categories.module';
 import { NewslettersModule } from './newsletters/newsletters.module';
 import { ComparisonsModule } from './comparisons/comparisons.module';
 import { ReviewsModule } from './reviews/reviews.module';
+import { BlogsModule } from './blogs/blogs.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { ReviewsModule } from './reviews/reviews.module';
     NewslettersModule,
     ComparisonsModule,
     ReviewsModule,
+    BlogsModule,
   ],
   providers: [
     { provide: APP_INTERCEPTOR, useClass: TransformInterceptor },
