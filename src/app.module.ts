@@ -24,6 +24,7 @@ import { ComparisonsModule } from './comparisons/comparisons.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { BlogsModule } from './blogs/blogs.module';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { AdvertisementsModule } from './advertisements/advertisements.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
     ReviewsModule,
     BlogsModule,
     AnalyticsModule,
+    AdvertisementsModule,
   ],
   providers: [
     { provide: APP_INTERCEPTOR, useClass: TransformInterceptor },
@@ -95,6 +97,9 @@ export class AppModule implements NestModule {
         { path: 'reviews/tool/:toolId/summary', method: RequestMethod.GET },
         { path: 'blogs', method: RequestMethod.GET },
         { path: 'blogs/:identifier', method: RequestMethod.GET },
+        { path: 'advertisements', method: RequestMethod.GET },
+        { path: 'advertisements/:id', method: RequestMethod.GET },
+        { path: 'advertisements/:id/action', method: RequestMethod.POST },
         // '/favicon.ico',
       )
       .forRoutes('*');
