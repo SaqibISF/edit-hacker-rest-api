@@ -23,6 +23,7 @@ import { NewslettersModule } from './newsletters/newsletters.module';
 import { ComparisonsModule } from './comparisons/comparisons.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { BlogsModule } from './blogs/blogs.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { BlogsModule } from './blogs/blogs.module';
     ComparisonsModule,
     ReviewsModule,
     BlogsModule,
+    AnalyticsModule,
   ],
   providers: [
     { provide: APP_INTERCEPTOR, useClass: TransformInterceptor },
@@ -88,6 +90,11 @@ export class AppModule implements NestModule {
         { path: 'newsletters/unsubscribe/:token', method: RequestMethod.GET },
         { path: 'comparisons', method: RequestMethod.GET },
         { path: 'comparisons/:identifier', method: RequestMethod.GET },
+        { path: 'reviews', method: RequestMethod.GET },
+        { path: 'reviews/:id', method: RequestMethod.GET },
+        { path: 'reviews/tool/:toolId/summary', method: RequestMethod.GET },
+        { path: 'blogs', method: RequestMethod.GET },
+        { path: 'blogs/:identifier', method: RequestMethod.GET },
         // '/favicon.ico',
       )
       .forRoutes('*');
