@@ -97,11 +97,16 @@ export class Blog {
 const BlogSchema = SchemaFactory.createForClass(Blog);
 
 // Indexes
-BlogSchema.index({ slug: 1 });
+// BlogSchema.index({ slug: 1 });
 BlogSchema.index({ status: 1, publishedAt: -1 });
 BlogSchema.index({ tags: 1 });
 BlogSchema.index({ relatedTools: 1 });
-BlogSchema.index({ title: 'text', excerpt: 'text', tags: 'text' });
+BlogSchema.index({
+  title: 'text',
+  slug: 'text',
+  excerpt: 'text',
+  tags: 'text',
+});
 
 // Pagination Plugin
 BlogSchema.plugin(mongooseAggregatePaginate);
