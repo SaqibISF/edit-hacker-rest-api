@@ -38,6 +38,7 @@ import { AdvertisementsModule } from './advertisements/advertisements.module';
         ACCESS_TOKEN_EXPIRY: Joi.string().required(),
         ACCESS_TOKEN_ALGORITHM: Joi.string().required(),
         FRONTEND_URL: Joi.string().required(),
+        CORS_ORIGINS: Joi.string().required(),
         RESEND_API_KEY: Joi.string().required(),
         RESEND_EMAIL_FROM: Joi.string().required(),
       }),

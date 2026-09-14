@@ -134,8 +134,8 @@ export class UserController {
 
     res.clearCookie(this.envService.access_token_key, {
       httpOnly: true,
-      secure: true,
-      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     });
 
     return {};

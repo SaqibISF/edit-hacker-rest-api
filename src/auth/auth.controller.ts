@@ -64,8 +64,8 @@ export class AuthController {
     if (!loginRes.user?.deletedAt) {
       res.cookie(this.envService.access_token_key, loginRes.access_token, {
         httpOnly: true,
-        secure: true,
-        sameSite: 'strict',
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         maxAge: 1000 * 60 * 60 * 24, // 1 day
       });
     }
@@ -90,8 +90,8 @@ export class AuthController {
     if (!loginRes.user?.deletedAt) {
       res.cookie(this.envService.access_token_key, loginRes.access_token, {
         httpOnly: true,
-        secure: true,
-        sameSite: 'strict',
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         maxAge: 1000 * 60 * 60 * 24, // 1 day
       });
     }
@@ -111,8 +111,8 @@ export class AuthController {
 
     res.clearCookie(this.envService.access_token_key, {
       httpOnly: true,
-      secure: true,
-      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     });
 
     return {};
