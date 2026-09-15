@@ -10,6 +10,7 @@ import {
   _QueryFilterLooseId,
   Model,
   PaginateOptions,
+  PipelineStage,
   PrePaginatePipelineStage,
   Types,
   type AggregatePaginateModel,
@@ -29,7 +30,6 @@ import { Category, CategoryDocument } from '../categories/category.schema';
 import { Connection } from 'mongoose';
 import { UserRole } from '../users/user.schema';
 import { Scope } from '../zod-schemas/scope.schema';
-import { QueryFilter } from 'mongoose';
 
 @Injectable()
 export class ToolsService {
@@ -42,6 +42,142 @@ export class ToolsService {
 
     @InjectConnection() private readonly connection: Connection,
   ) {}
+
+  private toolPipelines(): PipelineStage[] {
+    return [
+      // 1. Lookup Category
+      {
+        $lookup: {
+          from: 'categories',
+          localField: 'category',
+          foreignField: '_id',
+          as: 'category',
+        },
+      },
+      {
+        $unwind: {
+          path: '$category',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+
+      // 2. Lookup submittedBy (User)
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'submittedBy',
+          foreignField: '_id',
+          as: 'submittedBy',
+        },
+      },
+      {
+        $unwind: {
+          path: '$submittedBy',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+
+      // 3. Lookup reviewedBy (User)
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'reviewedBy',
+          foreignField: '_id',
+          as: 'reviewedBy',
+        },
+      },
+      {
+        $unwind: {
+          path: '$reviewedBy',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+
+      // 4. Project and shape fields
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          slug: 1,
+          tagline: 1,
+          description: 1,
+          logo: 1,
+          coverImage: 1,
+          screenshots: 1,
+          tags: 1,
+          pricingModel: 1,
+          startingPrice: 1,
+          plans: 1,
+          platforms: 1,
+          links: 1,
+          affiliateUrl: 1,
+          rating: 1,
+          viewCount: 1,
+          clickCount: 1,
+          saveCount: 1,
+          status: 1,
+          rejectionReason: 1,
+          reviewedAt: 1,
+          listingType: 1,
+          isFeatured: 1,
+          isSponsored: 1,
+          isVerified: 1,
+          featuredUntil: 1,
+          metaTitle: 1,
+          metaDescription: 1,
+          launchDate: 1,
+          isActive: 1,
+          createdAt: 1,
+          updatedAt: 1,
+
+          // Category nested object
+          category: {
+            $cond: {
+              if: '$category._id',
+              then: {
+                _id: '$category._id',
+                name: '$category.name',
+                slug: '$category.slug',
+                icon: '$category.icon',
+                description: '$category.description',
+              },
+              else: null,
+            },
+          },
+
+          // SubmittedBy nested object
+          submittedBy: {
+            $cond: {
+              if: '$submittedBy._id',
+              then: {
+                _id: '$submittedBy._id',
+                name: '$submittedBy.name',
+                email: '$submittedBy.email',
+                avatarUrl: '$submittedBy.avatarUrl',
+                role: '$submittedBy.role',
+              },
+              else: null,
+            },
+          },
+
+          // ReviewedBy nested object
+          reviewedBy: {
+            $cond: {
+              if: '$reviewedBy._id',
+              then: {
+                _id: '$reviewedBy._id',
+                name: '$reviewedBy.name',
+                email: '$reviewedBy.email',
+                avatarUrl: '$reviewedBy.avatarUrl',
+                role: '$reviewedBy.role',
+              },
+              else: null,
+            },
+          },
+        },
+      },
+    ];
+  }
 
   async getTools({
     page,
@@ -73,13 +209,15 @@ export class ToolsService {
       match.isActive = true;
     } else {
       if (status) match.status = status;
-      if (isActive) match.isActive = isActive;
+      if (isActive !== undefined) match.isActive = isActive;
     }
 
     if (search) match.$text = { $search: search };
     if (pricingModel) match.pricingModel = pricingModel;
 
     if (Object.keys(match).length > 0) aggregate.push({ $match: match });
+
+    aggregate.push(...this.toolPipelines());
 
     aggregate.push({ $sort: { [sortBy]: sortOrder === 'DESC' ? -1 : 1 } });
 
@@ -112,7 +250,8 @@ export class ToolsService {
     userId?: Types.ObjectId;
     role?: UserRole;
   }) {
-    const query: QueryFilter<ToolDocument> =
+    const aggregate: PipelineStage[] = [];
+    const match: _QueryFilterLooseId<ToolDocument> =
       typeof identifier === 'string'
         ? { slug: identifier }
         : { _id: identifier };
@@ -123,26 +262,24 @@ export class ToolsService {
           'You must be logged in to view your tool',
         );
       }
-      query.submittedBy = userId;
+      match.submittedBy = userId;
     } else if (role !== 'admin') {
-      query.status = 'approved';
-      query.isActive = true;
+      match.status = 'approved';
+      match.isActive = true;
     }
 
-    const tool = await this.toolModel
-      .findOne(
-        typeof identifier === 'string'
-          ? { slug: identifier }
-          : { _id: identifier },
-      )
-      .lean()
+    aggregate.push({ $match: match });
+    aggregate.push(...this.toolPipelines());
+
+    const tools = await this.toolModel
+      .aggregate<ToolDocument>(aggregate)
       .exec();
 
-    if (!tool) {
+    if (!tools || !tools.length) {
       throw new NotFoundException('Tool is not found');
     }
 
-    return { tool };
+    return { tool: tools[0] };
   }
 
   async checkSlugAvailability(slug: string) {

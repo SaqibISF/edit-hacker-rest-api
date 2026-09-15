@@ -73,7 +73,7 @@ export type UpdateToolCoverImageDto = z.infer<
 >;
 
 export const updateToolScreenshotsSchema = zfd.formData({
-  screenshots: z.array(imageFileSchema),
+  screenshots: zfd.repeatableOfType(imageFileSchema),
 });
 export type UpdateToolScreenshotsDto = z.infer<
   typeof updateToolScreenshotsSchema

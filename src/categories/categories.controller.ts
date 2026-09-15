@@ -117,14 +117,14 @@ export class CategoriesController {
   @Roles(['admin'])
   @Patch(':id/icon')
   @FormDataRequest()
-  @UsePipes(new ZodValidationPipe(updateCategoryIconSchema))
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Category icon updated successfully')
   @ApiUpdateCategoryIconDocs()
   async updateCategoryIcon(
     @Req() req: Request,
     @Param('id', MongooseIdPipe) categoryId: Types.ObjectId,
-    @Body() { icon }: UpdateCategoryIconDto,
+    @Body(new ZodValidationPipe(updateCategoryIconSchema))
+    { icon }: UpdateCategoryIconDto,
   ) {
     const protocol = req.protocol;
     const host = req.get('host');
@@ -147,14 +147,14 @@ export class CategoriesController {
   @Roles(['admin'])
   @Patch(':id/cover-image')
   @FormDataRequest()
-  @UsePipes(new ZodValidationPipe(updateCategoryCoverImageSchema))
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Category cover image updated successfully')
   @ApiUpdateCategoryCoverImageDocs()
   async updateCategoryCoverImage(
     @Req() req: Request,
     @Param('id', MongooseIdPipe) categoryId: Types.ObjectId,
-    @Body() { coverImage }: UpdateCategoryCoverImageDto,
+    @Body(new ZodValidationPipe(updateCategoryCoverImageSchema))
+    { coverImage }: UpdateCategoryCoverImageDto,
   ) {
     const protocol = req.protocol;
     const host = req.get('host');

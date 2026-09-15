@@ -154,7 +154,6 @@ export class ToolsController {
 
   @Patch(':id/logo')
   @FormDataRequest()
-  @UsePipes(new ZodValidationPipe(updateToolLogoSchema))
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Logo updated successfully')
   @ApiUpdateToolLogoDocs()
@@ -162,7 +161,8 @@ export class ToolsController {
     @Req() req: Request,
     @Payload() { _id: userId, role }: PayloadData,
     @Param('id', MongooseIdPipe) toolId: Types.ObjectId,
-    @Body() { logo }: UpdateToolLogoDto,
+    @Body(new ZodValidationPipe(updateToolLogoSchema))
+    { logo }: UpdateToolLogoDto,
   ) {
     const protocol = req.protocol;
     const host = req.get('host');
@@ -190,7 +190,6 @@ export class ToolsController {
 
   @Patch(':id/cover-image')
   @FormDataRequest()
-  @UsePipes(new ZodValidationPipe(updateToolCoverImageSchema))
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Cover image updated successfully')
   @ApiUpdateToolCoverImageDocs()
@@ -198,7 +197,8 @@ export class ToolsController {
     @Req() req: Request,
     @Payload() { _id: userId, role }: PayloadData,
     @Param('id', MongooseIdPipe) toolId: Types.ObjectId,
-    @Body() { coverImage }: UpdateToolCoverImageDto,
+    @Body(new ZodValidationPipe(updateToolCoverImageSchema))
+    { coverImage }: UpdateToolCoverImageDto,
   ) {
     const protocol = req.protocol;
     const host = req.get('host');
@@ -230,7 +230,6 @@ export class ToolsController {
 
   @Patch(':id/screenshots')
   @FormDataRequest()
-  @UsePipes(new ZodValidationPipe(updateToolScreenshotsSchema))
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Screenshots updated successfully')
   @ApiUpdateToolScreenshotsDocs()
@@ -238,7 +237,8 @@ export class ToolsController {
     @Req() req: Request,
     @Payload() { _id: userId, role }: PayloadData,
     @Param('id', MongooseIdPipe) toolId: Types.ObjectId,
-    @Body() { screenshots }: UpdateToolScreenshotsDto,
+    @Body(new ZodValidationPipe(updateToolScreenshotsSchema))
+    { screenshots }: UpdateToolScreenshotsDto,
   ) {
     const protocol = req.protocol;
     const host = req.get('host');

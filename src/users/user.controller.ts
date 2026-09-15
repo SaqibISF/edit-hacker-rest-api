@@ -91,14 +91,13 @@ export class UserController {
 
   @Patch('avatar')
   @FormDataRequest()
-  @UsePipes(new ZodValidationPipe(avatarSchema))
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Avatar updated successfully')
   @ApiUpdateUserAvatarDocs()
   async updateAvatar(
     @Req() req: Request,
     @Payload('_id') userId: Types.ObjectId,
-    @Body() { avatar }: AvatarDto,
+    @Body(new ZodValidationPipe(avatarSchema)) { avatar }: AvatarDto,
   ) {
     const protocol = req.protocol;
     const host = req.get('host');

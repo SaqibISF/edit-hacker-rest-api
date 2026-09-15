@@ -33,6 +33,25 @@ const planSchemaProperties = {
   trialDays: { type: 'number', example: 14 },
 };
 
+const categorySchemaProperties = {
+  _id: { type: 'string', example: '60d0fe4f5311236168a109cb' },
+  name: { type: 'string', example: 'AI Tools' },
+  slug: { type: 'string', example: 'ai-tools' },
+  icon: { type: 'string', example: 'https://example.com/icon.png' },
+  description: {
+    type: 'string',
+    example: 'Tools powered by artificial intelligence.',
+  },
+};
+
+const userSafeProperties = {
+  _id: { type: 'string', example: '60d0fe4f5311236168a109cc' },
+  name: { type: 'string', example: 'John Doe' },
+  email: { type: 'string', example: 'john@example.com' },
+  avatarUrl: { type: 'string', example: 'https://example.com/avatar.png' },
+  role: { type: 'string', example: 'user' },
+};
+
 const toolSchemaProperties = {
   _id: { type: 'string', example: '60d0fe4f5311236168a109ca' },
   name: { type: 'string', example: 'Tool Name' },
@@ -48,7 +67,11 @@ const toolSchemaProperties = {
     type: 'array',
     items: { type: 'string', example: 'https://example.com/screenshot1.png' },
   },
-  category: { type: 'string', example: '60d0fe4f5311236168a109cb' },
+  category: {
+    type: 'object',
+    nullable: true,
+    properties: categorySchemaProperties,
+  },
   tags: { type: 'array', items: { type: 'string', example: 'seo' } },
   pricingModel: {
     type: 'string',
@@ -93,10 +116,18 @@ const toolSchemaProperties = {
   viewCount: { type: 'number', example: 1500 },
   clickCount: { type: 'number', example: 350 },
   saveCount: { type: 'number', example: 120 },
-  submittedBy: { type: 'string', example: '60d0fe4f5311236168a109cc' },
+  submittedBy: {
+    type: 'object',
+    nullable: true,
+    properties: userSafeProperties,
+  },
   status: { type: 'string', enum: [...toolStatuses], example: 'approved' },
   rejectionReason: { type: 'string', example: 'Incomplete information' },
-  reviewedBy: { type: 'string', example: '60d0fe4f5311236168a109cd' },
+  reviewedBy: {
+    type: 'object',
+    nullable: true,
+    properties: userSafeProperties,
+  },
   reviewedAt: { type: 'string', format: 'date-time' },
   listingType: {
     type: 'string',
@@ -198,6 +229,21 @@ export function ApiGetToolsDocs() {
       enum: [...toolPricingModels],
       description: 'Filter by pricing model',
     }),
+    ApiQuery({
+      name: 'scope',
+      required: false,
+      type: String,
+      enum: ['public', 'mine'],
+      description: 'Query scope (public catalog or current user tools)',
+      example: 'public',
+    }),
+    ApiQuery({
+      name: 'isActive',
+      required: false,
+      type: Boolean,
+      description: 'Filter by active status',
+      example: true,
+    }),
     ApiResponse({
       status: HttpStatus.OK,
       description: 'Tools successfully retrieved',
@@ -239,6 +285,14 @@ export function ApiGetToolDocs() {
       type: String,
       description: 'Slug or MongoDB ID of the tool',
       example: 'tool-name',
+    }),
+    ApiQuery({
+      name: 'scope',
+      required: false,
+      type: String,
+      enum: ['public', 'mine'],
+      description: 'Query scope (public or user owned)',
+      example: 'public',
     }),
     ApiResponse({
       status: HttpStatus.OK,

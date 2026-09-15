@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NestMiddleware,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, NestMiddleware } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { NextFunction, Request, Response } from 'express';
 import { EnvService } from '../env/env.service';
@@ -12,7 +8,7 @@ import { RevokedToken, RevokedTokenDocument } from './revoked-tokens.schema';
 import { Model, Types } from 'mongoose';
 
 @Injectable()
-export class AuthMiddleware implements NestMiddleware {
+export class OptionalAuthMiddleware implements NestMiddleware {
   constructor(
     @InjectModel(RevokedToken.name)
     private readonly revokedTokenModel: Model<RevokedTokenDocument>,
@@ -24,7 +20,7 @@ export class AuthMiddleware implements NestMiddleware {
     try {
       const accessTokenFromHeaders = req.headers.authorization;
 
-      const accessTokenFromCookie = req.cookies[
+      const accessTokenFromCookie = req.cookies?.[
         this.envService.access_token_key
       ] as string | undefined;
 
@@ -34,17 +30,13 @@ export class AuthMiddleware implements NestMiddleware {
           : accessTokenFromCookie;
 
       if (!token) {
-        throw new UnauthorizedException(
-          'Unauthorized, invalid token: token not found',
-        );
+        return next();
       }
 
       const isRevoked = await this.revokedTokenModel.findOne({ token });
 
       if (isRevoked) {
-        throw new UnauthorizedException(
-          'Unauthorized, session has been expired or token has been revoked',
-        );
+        return next();
       }
 
       const decodedToken: Jwt = await this.jwtService.verifyAsync(token, {
@@ -55,22 +47,15 @@ export class AuthMiddleware implements NestMiddleware {
 
       const payload = decodedToken.payload as JwtPayload;
 
-      if (!payload._id) {
-        throw new UnauthorizedException(
-          'Unauthorized, session has been expired or token has been revoked',
-        );
+      if (payload && payload._id) {
+        payload._id = Types.ObjectId.createFromHexString(payload._id as string);
+        req['payload'] = { ...payload, token };
       }
 
-      payload._id = Types.ObjectId.createFromHexString(payload._id as string);
-
-      req['payload'] = { ...payload, token };
-
       return next();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Invalid token';
-      throw new UnauthorizedException(
-        `${!message.startsWith('Unauthorized') ? 'Unauthorized, ' : ''}${message}`,
-      );
+    } catch {
+      // If token is invalid or expired, continue without setting payload
+      return next();
     }
   }
 }

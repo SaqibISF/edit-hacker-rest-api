@@ -123,14 +123,14 @@ export class BlogsController {
   @Roles(['admin'])
   @Patch(':id/cover-image')
   @FormDataRequest()
-  @UsePipes(new ZodValidationPipe(updateBlogCoverImageSchema))
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Blog cover image updated successfully')
   @ApiUpdateBlogCoverImageDocs()
   async updateBlogCoverImage(
     @Req() req: Request,
     @Param('id', MongooseIdPipe) blogId: Types.ObjectId,
-    @Body() { coverImage }: UpdateBlogCoverImageDto,
+    @Body(new ZodValidationPipe(updateBlogCoverImageSchema))
+    { coverImage }: UpdateBlogCoverImageDto,
   ) {
     const protocol = req.protocol;
     const host = req.get('host');
@@ -156,14 +156,14 @@ export class BlogsController {
   @Roles(['admin'])
   @Patch(':id/icon')
   @FormDataRequest()
-  @UsePipes(new ZodValidationPipe(updateBlogIconSchema))
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Blog icon updated successfully')
   @ApiUpdateBlogIconDocs()
   async updateBlogIcon(
     @Req() req: Request,
     @Param('id', MongooseIdPipe) blogId: Types.ObjectId,
-    @Body() { icon }: UpdateBlogIconDto,
+    @Body(new ZodValidationPipe(updateBlogIconSchema))
+    { icon }: UpdateBlogIconDto,
   ) {
     const protocol = req.protocol;
     const host = req.get('host');

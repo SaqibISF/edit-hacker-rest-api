@@ -8,6 +8,7 @@ import { EnvService } from '../env/env.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import RevokedTokenSchema, { RevokedToken } from './revoked-tokens.schema';
 import { AuthMiddleware } from './auth.middleware';
+import { OptionalAuthMiddleware } from './optional-auth.middleware';
 import OtpSecretSchema, { OtpSecret } from './otp-secret.schema';
 
 @Module({
@@ -31,7 +32,7 @@ import OtpSecretSchema, { OtpSecret } from './otp-secret.schema';
     forwardRef(() => UsersModule),
   ],
   controllers: [AuthController],
-  providers: [AuthService, AuthMiddleware],
+  providers: [AuthService, AuthMiddleware, OptionalAuthMiddleware],
   exports: [MongooseModule],
 })
 export class AuthModule {}

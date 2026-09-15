@@ -1,15 +1,10 @@
 import { z } from 'zod';
 import { baseQuerySchema } from '../zod-schemas/base-query.schema';
-import { zfd } from 'zod-form-data';
 import { imageFileSchema } from '../zod-schemas/file.schema';
 
 export const categoriesQuerySchema = baseQuerySchema.extend({
-  isFeatured: z
-    .preprocess((val) => val === 'true' || val === true, z.boolean())
-    .optional(),
-  isActive: z
-    .preprocess((val) => val === 'true' || val === true, z.boolean())
-    .optional(),
+  isFeatured: z.stringbool().optional(),
+  isActive: z.stringbool().optional(),
   sortBy: z
     .literal(['name', 'toolCount', 'order', 'createdAt', 'updatedAt'])
     .default('createdAt'),
@@ -41,10 +36,10 @@ export type CreateCategoryDto = z.infer<typeof createCategorySchema>;
 export const updateCategorySchema = createCategorySchema.partial();
 export type UpdateCategoryDto = z.infer<typeof updateCategorySchema>;
 
-export const updateCategoryIconSchema = zfd.formData({ icon: imageFileSchema });
+export const updateCategoryIconSchema = z.object({ icon: imageFileSchema });
 export type UpdateCategoryIconDto = z.infer<typeof updateCategoryIconSchema>;
 
-export const updateCategoryCoverImageSchema = zfd.formData({
+export const updateCategoryCoverImageSchema = z.object({
   coverImage: imageFileSchema,
 });
 export type UpdateCategoryCoverImageDto = z.infer<

@@ -16,6 +16,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { EnvService } from './env/env.service';
 import { LoggerMiddleware } from './middlewares/logger/logger.middleware';
 import { AuthMiddleware } from './auth/auth.middleware';
+import { OptionalAuthMiddleware } from './auth/optional-auth.middleware';
 import { FormDataConfigModule } from './form-data-config/form-data-config.module';
 import { ToolsModule } from './tools/tools.module';
 import { CategoriesModule } from './categories/categories.module';
@@ -68,6 +69,24 @@ import { AdvertisementsModule } from './advertisements/advertisements.module';
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(LoggerMiddleware).forRoutes('*');
+
+    consumer
+      .apply(OptionalAuthMiddleware)
+      .forRoutes(
+        { path: 'tools', method: RequestMethod.GET },
+        { path: 'tools/:identifier', method: RequestMethod.GET },
+        { path: 'categories', method: RequestMethod.GET },
+        { path: 'categories/:identifier', method: RequestMethod.GET },
+        { path: 'comparisons', method: RequestMethod.GET },
+        { path: 'comparisons/:identifier', method: RequestMethod.GET },
+        { path: 'reviews', method: RequestMethod.GET },
+        { path: 'reviews/:id', method: RequestMethod.GET },
+        { path: 'blogs', method: RequestMethod.GET },
+        { path: 'blogs/:identifier', method: RequestMethod.GET },
+        { path: 'advertisements', method: RequestMethod.GET },
+        { path: 'advertisements/:id', method: RequestMethod.GET },
+      );
+
     consumer
       .apply(AuthMiddleware)
       .exclude(

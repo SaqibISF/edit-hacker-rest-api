@@ -119,7 +119,6 @@ export class AdvertisementsController {
 
   @Patch(':id/logo')
   @FormDataRequest()
-  @UsePipes(new ZodValidationPipe(updateAdLogoSchema))
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Advertisement logo updated successfully')
   @ApiUpdateAdLogoDocs()
@@ -127,7 +126,7 @@ export class AdvertisementsController {
     @Req() req: Request,
     @Payload() { _id: userId, role }: PayloadData,
     @Param('id', MongooseIdPipe) adId: Types.ObjectId,
-    @Body() { logo }: UpdateAdLogoDto,
+    @Body(new ZodValidationPipe(updateAdLogoSchema)) { logo }: UpdateAdLogoDto,
   ) {
     const protocol = req.protocol;
     const host = req.get('host');
