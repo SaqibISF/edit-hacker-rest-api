@@ -245,6 +245,10 @@ export class ComparisonsService {
     role: UserRole;
     createComparisonDto: CreateComparisonDto;
   }) {
+    if (role !== 'admin') {
+      delete createComparisonDto.isPublished;
+    }
+
     const exists = await this.comparisonModel
       .exists({ slug: createComparisonDto.slug })
       .lean()

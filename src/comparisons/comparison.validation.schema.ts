@@ -26,12 +26,10 @@ export const createComparisonSchema = z
       .max(5, 'A comparison can have at most 5 tools'),
     winner: objectIdSchema.optional().nullable(),
     summary: z.string().trim().max(500).optional(),
+    isPublished: z.boolean().optional(),
   })
   .strict();
 export type CreateComparisonDto = z.infer<typeof createComparisonSchema>;
 
-export const updateComparisonSchema = createComparisonSchema
-  .partial()
-  .extend({ isPublished: z.boolean().optional() })
-  .strict();
+export const updateComparisonSchema = createComparisonSchema.partial().strict();
 export type UpdateComparisonDto = z.infer<typeof updateComparisonSchema>;
