@@ -130,8 +130,19 @@ export class BlogsService {
     if (tag) match.tags = tag;
     if (author) match.author = author;
     if (relatedTool) match.relatedTools = relatedTool;
-    if (isFeatured) match.isFeatured = isFeatured;
-    if (search) match.$text = { $search: search };
+    if (isFeatured !== undefined) match.isFeatured = isFeatured;
+    if (search) {
+      const searchRegex = new RegExp(
+        search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+        'i',
+      );
+      match.$or = [
+        { title: searchRegex },
+        { excerpt: searchRegex },
+        { tags: searchRegex },
+        { slug: searchRegex },
+      ];
+    }
 
     if (Object.keys(match).length > 0) aggregate.push({ $match: match });
 
