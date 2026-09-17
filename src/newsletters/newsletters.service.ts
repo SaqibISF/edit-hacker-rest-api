@@ -73,7 +73,7 @@ export class NewslettersService {
 
   async subscribe(
     subscribeNewsletterDto: SubscribeNewsletterDto,
-    user?: Types.ObjectId,
+    userId?: Types.ObjectId,
   ) {
     const existing = await this.newsletterModel
       .findOne({ email: subscribeNewsletterDto.email })
@@ -90,13 +90,13 @@ export class NewslettersService {
     const confirmTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     const newsletter = await this.newsletterModel
-      .findByIdAndUpdate(
-        existing?._id,
+      .findOneAndUpdate(
+        { email: subscribeNewsletterDto.email },
         {
           ...subscribeNewsletterDto,
           unsubscribedAt: null,
-          ...(user
-            ? { user, status: 'confirmed', confirmedAt: new Date() }
+          ...(userId
+            ? { userId, status: 'confirmed', confirmedAt: new Date() }
             : { status: 'pending', confirmToken, confirmTokenExpiry }),
           unsubscribeToken,
         },
@@ -105,7 +105,7 @@ export class NewslettersService {
       .lean()
       .exec();
 
-    if (!user) {
+    if (!userId) {
       const { error } = await this.resendService.send({
         from: this.envService.resend_email_from,
         to: subscribeNewsletterDto.email,

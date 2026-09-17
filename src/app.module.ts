@@ -79,6 +79,7 @@ export class AppModule implements NestModule {
         { path: 'categories/:identifier', method: RequestMethod.GET },
         { path: 'comparisons', method: RequestMethod.GET },
         { path: 'comparisons/:identifier', method: RequestMethod.GET },
+        { path: 'newsletters/subscribe', method: RequestMethod.POST },
         { path: 'reviews', method: RequestMethod.GET },
         { path: 'reviews/:id', method: RequestMethod.GET },
         { path: 'blogs', method: RequestMethod.GET },
