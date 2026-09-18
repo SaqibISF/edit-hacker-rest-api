@@ -26,6 +26,7 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { BlogsModule } from './blogs/blogs.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { AdvertisementsModule } from './advertisements/advertisements.module';
+import { BackupsModule } from './backups/backups.module';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { AdvertisementsModule } from './advertisements/advertisements.module';
     BlogsModule,
     AnalyticsModule,
     AdvertisementsModule,
+    BackupsModule,
   ],
   providers: [
     { provide: APP_INTERCEPTOR, useClass: TransformInterceptor },

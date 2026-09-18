@@ -9,6 +9,8 @@ bun.lockb
 
 uploads
 
+.backups
+
 
 # Logs
 logs
